@@ -125,7 +125,7 @@ export default function Quiz() {
               <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 12, fill: '#4B5563' }} />
               <PolarRadiusAxis angle={30} domain={[0, 100]} />
               <Radar name="Votre Score" dataKey="score" stroke="#3B82F6" fill="#93C5FD" fillOpacity={0.6} />
-              <Tooltip formatter={(value, name, props) => [`${value}%`, getAdvice(props.payload.dimension, value)]} />
+              <Tooltip formatter={(value: number, name: string, props: any) => [`${value}%`, getAdvice(props.payload.dimension, value)]} />
             </RadarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -140,7 +140,7 @@ export default function Quiz() {
                 <ResponsiveContainer width="100%" height={100}>
                   <BarChart data={[item]}>
                     <Bar dataKey="score" fill={item.fill} radius={[4, 4, 0, 0]} />
-                    <Tooltip formatter={(value) => [`${value}%`, getAdvice(item.dimension, value)]} />
+                    <Tooltip formatter={(value: number) => [`${value}%`, getAdvice(item.dimension, value)]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
