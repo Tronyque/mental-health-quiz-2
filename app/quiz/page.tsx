@@ -150,7 +150,7 @@ export default function Quiz() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="text-muted-foreground mb-8 text-center max-w-md"
         >
-          Vos réponses en un coup d’œil. Survolez pour des conseils courts et adaptés !
+          Vos réponses en un coup d’œil. Survolez ou cliquez pour des conseils adaptés !
         </motion.p>
         
         {/* Radar global animé */}
@@ -185,7 +185,7 @@ export default function Quiz() {
         >
           Détails
         </motion.h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-4xl">
           {chartData.map((item, index) => (
             <motion.div
               key={item.dimension}
@@ -193,20 +193,19 @@ export default function Quiz() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 + index * 0.1, duration: 0.4, type: 'spring', stiffness: 80 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-card p-4 rounded-3xl shadow-soft"
+              className="bg-card p-3 rounded-3xl shadow-soft"
             >
-              <h3 className="text-lg font-medium mb-2 text-foreground text-center">{item.dimension}</h3>
+              <h3 className="text-base font-medium mb-2 text-foreground text-center mx-auto w-full">{item.dimension}</h3>
               <ResponsiveContainer width="100%" height={140}>
                 <BarChart data={[item]} margin={{ top: 10, right: 0, bottom: 0, left: -10 }}>
                   <XAxis hide />
                   <YAxis domain={[0, 100]} hide />
-                  <Bar dataKey="score" fill={item.fill} radius={[4, 4, 0, 0]} maxBarSize={60}>
-                    {/* @ts-ignore pour contourner erreur TS sur formatter */}
+                  <Bar dataKey="score" fill={item.fill} radius={[4, 4, 0, 0]} maxBarSize={50}>
                     <LabelList
                       dataKey="score"
                       position="top"
                       content={({ x, y, width, value }: any) => (
-                        <text x={x + width / 2} y={y - 15} fill="#4B5563" textAnchor="middle" fontSize={14}>
+                        <text x={x + width / 2} y={y - 20} dy={-5} fill="#4B5563" textAnchor="middle" fontSize={12}>
                           {Math.round(value)}%
                         </text>
                       )}
