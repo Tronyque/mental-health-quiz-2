@@ -63,6 +63,6 @@ export const dimensions: string[] = [
 ];
 
 export function normalizeScore(raw: number, min: number, max: number, inverted: boolean): number {
-  let score = inverted ? (max - raw + min) : raw;
+  const score = inverted ? (max - raw + min) : raw;
   return Math.round(((score - min) / (max - min)) * 100);
 }

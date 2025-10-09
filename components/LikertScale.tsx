@@ -1,5 +1,4 @@
 import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { FaRegFrown, FaRegMeh, FaRegSmile, FaRegGrin, FaRegLaughBeam } from 'react-icons/fa';
 

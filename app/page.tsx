@@ -1,103 +1,234 @@
-import Image from "next/image";
+'use client';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LikertScale } from '@/components/LikertScale';
+import { questions, dimensions, normalizeScore } from '@/lib/questions';
+import { createClient } from '@supabase/supabase-js';
+import { BarChart, Bar, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts'; // Remove unused
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { ProgressCircle } from '@/components/ProgressCircle';
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default function Quiz() {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<number[]>(new Array(questions.length).fill(0));
+  const [employeeId, setEmployeeId] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleAuth = async () => {
+    setLoading(true);
+    if (!employeeId) {
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase.from('employees').select('id, completed').eq('employee_id', employeeId);
+    if (data && data.length > 0) {
+      if (data[0].completed) {
+        setError('Ce questionnaire a déjà été complété pour cet ID.');
+        setLoading(false);
+        return;
+      }
+      setAuthenticated(true);
+    } else {
+      const { data: newEmp } = await supabase.from('employees').insert({ employee_id: employeeId }).select();
+      if (newEmp) setAuthenticated(true);
+    }
+    setLoading(false);
+  };
+
+  const handleNext = () => {
+    if (answers[step] === 0) return;
+    if (step < questions.length - 1) {
+      setStep(step + 1);
+    } else {
+      submitResponses();
+    }
+  };
+
+  const submitResponses = async () => {
+    setLoading(true);
+    const empRes = await supabase.from('employees').select('id').eq('employee_id', employeeId);
+    const empId = empRes.data?.[0].id;
+    if (!empId) {
+      setError('Erreur ID');
+      setLoading(false);
+      return;
+    }
+
+    for (let i = 0; i < questions.length; i++) {
+      await supabase.from('responses').insert({
+        employee_id: empId,
+        question_id: questions[i].id,
+        score: answers[i],
+      });
+    }
+    await supabase.from('employees').update({ completed: true }).eq('employee_id', employeeId);
+    setShowResults(true);
+    setLoading(false);
+  };
+
+  const calculateScores = () => {
+    return dimensions.map((dim) => {
+      const qs = questions.filter((q) => q.dimension === dim);
+      const total = qs.reduce((sum, q) => {
+        const qIndex = questions.findIndex((qq) => qq.id === q.id);
+        return sum + normalizeScore(answers[qIndex], q.scale.min, q.scale.max, q.inverted);
+      }, 0);
+      return total / qs.length;
+    });
+  };
+
+  const getColor = (score: number) => {
+    if (score > 70) return '#B2D8B2'; // Vert bienveillant
+    if (score > 50) return '#FFD3E0'; // Jaune/rose doux
+    return '#A7C7E7'; // Bleu calme pour bas
+  };
+
+  const getAdvice = (dim: string, score: number) => {
+    if (score > 70) return `Bravo ! Votre ${dim.toLowerCase()} est élevé. Continuez ainsi.`;
+    if (score > 50) return `Bien, mais room for improvement en ${dim.toLowerCase()}. Essayez des pauses quotidiennes.`;
+    return `À surveiller : Votre ${dim.toLowerCase()} est bas. Parlez-en à un pro pour des conseils adaptés. Prenez soin de vous !`;
+  };
+
+  const progress = ((step + 1) / questions.length) * 100;
+
+  if (showResults) {
+    const scores = calculateScores();
+    const chartData = dimensions.map((dim, i) => ({
+      dimension: dim,
+      score: scores[i],
+      fill: getColor(scores[i]),
+    }));
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex flex-col items-center p-4"
+      >
+        <h1 className="text-3xl font-bold mb-6 text-primary drop-shadow-soft">Vos Résultats Personnels</h1>
+        <p className="text-muted-foreground mb-8 text-center max-w-md">Voici une vue douce de vos réponses. Les couleurs s&apos;adaptent : vert pour fort, jaune pour moyen, bleu pour à améliorer. Survolez pour des conseils bienveillants.</p> {/* Escaped &apos; */}
+        
+        {/* Radar global animé */}
+        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ duration: 0.5 }}>
+          <ResponsiveContainer width="100%" height={400}>
+            <RadarChart data={chartData} outerRadius="80%">
+              <PolarGrid />
+              <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 12, fill: '#4B5563' }} />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} />
+              <Radar name="Votre Score" dataKey="score" stroke="#3B82F6" fill="#93C5FD" fillOpacity={0.6} />
+              <Tooltip formatter={(value: number, name: string, props: any) => [`${value}%`, getAdvice(props.payload.dimension, value)]} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </motion.div>
+        
+        {/* Complément : Bar charts par dimension, interactifs */}
+        <h2 className="text-2xl font-semibold mt-8 mb-4 text-foreground">Détails par Dimension</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+          {chartData.map((item) => (
+            <motion.div key={item.dimension} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+              <div className="bg-card p-4 rounded-3xl shadow-soft">
+                <h3 className="text-lg font-medium mb-2">{item.dimension}</h3>
+                <ResponsiveContainer width="100%" height={100}>
+                  <BarChart data={[item]}>
+                    <Bar dataKey="score" fill={item.fill} radius={[4, 4, 0, 0]} />
+                    <Tooltip formatter={(value: number) => [`${value}%`, getAdvice(item.dimension, value)]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </motion.div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="max-w-lg w-full bg-card rounded-3xl shadow-soft p-8 border border-accent/10"
+      >
+        {!authenticated ? (
+          <div className="space-y-6">
+            <h1 className="text-2xl font-bold text-center text-primary">Bienvenue au Questionnaire Bien-Être</h1>
+            <p className="text-muted-foreground text-center px-4">Ce questionnaire anonyme et bienveillant vous aide à évaluer votre santé mentale au travail. Il est rapide, confidentiel, et nous permettra d&apos;améliorer les conditions pour tous. Prenez votre temps !</p> {/* Escaped &apos; */}
+            <Label htmlFor="employeeId" className="text-lg block text-foreground">Entrez un pseudo (unique)</Label>
+            <Input
+              id="employeeId"
+              type="text"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+              placeholder="Ex: MonPseudo123"
+              className="transition-all duration-300 focus:ring-2 focus:ring-secondary rounded-full"
+            />
+            {error && <p className="text-destructive text-center">{error}</p>}
+            <Button
+              onClick={handleAuth}
+              disabled={!employeeId}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:brightness-110 transition-all duration-300 shadow-md rounded-full"
+            >
+              Commencer
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-center mb-6">
+              <ProgressCircle value={progress} />
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.h2
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="text-xl font-semibold text-center text-foreground px-4"
+              >
+                {questions[step].text}
+              </motion.h2>
+            </AnimatePresence>
+            <LikertScale
+              min={questions[step].scale.min}
+              max={questions[step].scale.max}
+              value={answers[step]}
+              onChange={(val) => {
+                const newAns = [...answers];
+                newAns[step] = val;
+                setAnswers(newAns);
+              }}
+              labels={questions[step].scale.labels}
+              useEmojis={true}
+            />
+            <Button
+              onClick={handleNext}
+              disabled={answers[step] === 0}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:brightness-110 transition-all duration-300 shadow-md rounded-full"
+            >
+              {step === questions.length - 1 ? 'Terminer et Voir Résultats' : 'Suivant'}
+            </Button>
+            <p className="text-sm text-muted-foreground text-center">Question {step + 1} sur {questions.length}</p>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }
