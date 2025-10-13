@@ -23,24 +23,57 @@ export default function Quiz() {
   const [error, setError] = useState('');
 
   const handleAuth = async () => {
-    setLoading(true);
-    if (!employeeId) {
-      setLoading(false);
+    if (!employeeId.trim()) {
+      setError('Merci de renseigner votre pseudo avant de continuer.');
       return;
     }
-    const { data } = await supabase.from('employees').select('id, completed').eq('employee_id', employeeId);
-    if (data && data.length > 0) {
-      if (data[0].completed) {
-        setError('Ce questionnaire a déjà été complété pour ce pseudo.');
-        setLoading(false);
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('employees')
+        .select('id, completed')
+        .eq('employee_id', employeeId.trim())
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Supabase auth lookup failed', fetchError);
+        console.info('analytics:event', { name: 'auth_lookup_failed', reason: fetchError.message });
+        throw fetchError;
+      }
+
+      if (data) {
+        if (data.completed) {
+          setError('Ce questionnaire a déjà été complété pour ce pseudo.');
+          return;
+        }
+        setAuthenticated(true);
         return;
       }
-      setAuthenticated(true);
-    } else {
-      const { data: newEmp } = await supabase.from('employees').insert({ employee_id: employeeId }).select();
-      if (newEmp) setAuthenticated(true);
+
+      const { data: newEmp, error: insertError } = await supabase
+        .from('employees')
+        .insert({ employee_id: employeeId.trim() })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('Supabase employee creation failed', insertError);
+        console.info('analytics:event', { name: 'employee_create_failed', reason: insertError.message });
+        throw insertError;
+      }
+
+      if (newEmp) {
+        setAuthenticated(true);
+      }
+    } catch (authError) {
+      console.error('Authentication error', authError);
+      setError("Une erreur est survenue lors de l'authentification. Merci de réessayer dans quelques instants.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleNext = () => {
@@ -54,24 +87,58 @@ export default function Quiz() {
 
   const submitResponses = async () => {
     setLoading(true);
-    const empRes = await supabase.from('employees').select('id').eq('employee_id', employeeId);
-    const empId = empRes.data?.[0].id;
-    if (!empId) {
-      setError('Erreur pseudo');
-      setLoading(false);
-      return;
-    }
+    setError('');
 
-    for (let i = 0; i < questions.length; i++) {
-      await supabase.from('responses').insert({
-        employee_id: empId,
-        question_id: questions[i].id,
-        score: answers[i],
-      });
+    try {
+      const { data: employee, error: employeeError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('employee_id', employeeId.trim())
+        .maybeSingle();
+
+      if (employeeError) {
+        console.error('Supabase employee fetch failed', employeeError);
+        console.info('analytics:event', { name: 'employee_fetch_failed', reason: employeeError.message });
+        throw employeeError;
+      }
+
+      if (!employee) {
+        setError('Pseudo introuvable. Merci de vérifier votre saisie.');
+        return;
+      }
+
+      const responsePayload = questions.map((question, index) => ({
+        employee_id: employee.id,
+        question_id: question.id,
+        score: answers[index],
+      }));
+
+      const { error: responsesError } = await supabase.from('responses').insert(responsePayload);
+
+      if (responsesError) {
+        console.error('Supabase responses insert failed', responsesError);
+        console.info('analytics:event', { name: 'responses_insert_failed', reason: responsesError.message });
+        throw responsesError;
+      }
+
+      const { error: completionError } = await supabase
+        .from('employees')
+        .update({ completed: true })
+        .eq('employee_id', employeeId.trim());
+
+      if (completionError) {
+        console.error('Supabase employee completion flag failed', completionError);
+        console.info('analytics:event', { name: 'employee_completion_failed', reason: completionError.message });
+        throw completionError;
+      }
+
+      setShowResults(true);
+    } catch (submissionError) {
+      console.error('Submission error', submissionError);
+      setError('Impossible de soumettre vos réponses. Veuillez réessayer plus tard.');
+    } finally {
+      setLoading(false);
     }
-    await supabase.from('employees').update({ completed: true }).eq('employee_id', employeeId);
-    setShowResults(true);
-    setLoading(false);
   };
 
   const calculateScores = () => {
