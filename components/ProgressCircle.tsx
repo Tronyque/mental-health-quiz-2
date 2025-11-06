@@ -1,47 +1,86 @@
-import { motion } from 'framer-motion';
+"use client";
+import { motion } from "framer-motion";
+import { useTokenColor } from "@/lib/useTokenColor";
 
-interface ProgressCircleProps {
-  value: number;
+interface Props {
+  value: number;            // 0..100
+  size?: number;            // px – diamètre du cercle (par défaut 112)
+  thickness?: number;       // px – épaisseur du trait (par défaut 10)
+  showLabel?: boolean;      // afficher le % au centre (par défaut true)
+  autoColor?: boolean;      // adapte la couleur selon la progression
+  trackColor?: string;
+  progressColor?: string;   // force une couleur
 }
 
-export function ProgressCircle({ value }: ProgressCircleProps) {
-  const radius = 50;
+export function ProgressCircle({
+  value,
+  size = 112,
+  thickness = 10,
+  showLabel = true,
+  autoColor = true,
+  trackColor,
+  progressColor,
+}: Props) {
+  const primary = useTokenColor("--color-primary", "#7da6d2");
+  const secondary = useTokenColor("--color-secondary", "#9ac9aa");
+  const accent = useTokenColor("--color-accent", "#e9e7da");
+  const ring = useTokenColor("--color-ring", "#6d9bc4");
+
+  const color = (() => {
+    if (progressColor) return progressColor;
+    if (!autoColor) return primary;
+    if (value >= 75) return secondary;
+    if (value >= 50) return primary;
+    return accent;
+  })();
+
+  // On reste sur un repère 100x100 pour un rendu net,
+  // et on scale via width/height (style) pour la taille finale.
+  const radius = 45; // rayon effectif (dans le repère 100x100)
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - value / 100);
+  const clamped = Math.max(0, Math.min(100, value));
+  const offset = circumference - (clamped / 100) * circumference;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="relative w-28 h-28 flex items-center justify-center"
+    <div
+      role="img"
+      aria-label={`Progression ${Math.round(clamped)}%`}
+      className="relative"
+      style={{ width: size, height: size }}
     >
-      <svg width="100%" height="100%" viewBox="0 0 120 120">
+      <svg className="w-full h-full" viewBox="0 0 100 100">
+        {/* piste */}
         <circle
-          cx="60"
-          cy="60"
+          stroke={trackColor || "var(--color-border)"}
+          strokeWidth={thickness}
+          fill="transparent"
           r={radius}
-          fill="none"
-          stroke="#E5E7EB"
-          strokeWidth="10"
+          cx="50"
+          cy="50"
         />
+        {/* progression */}
         <motion.circle
-          cx="60"
-          cy="60"
+          stroke={color}
+          strokeWidth={thickness}
+          strokeLinecap="round"
+          fill="transparent"
           r={radius}
-          fill="none"
-          stroke="#A7C7E7" // Bleu pastel
-          strokeWidth="10"
+          cx="50"
+          cy="50"
           strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          strokeDashoffset={offset}
+          transform="rotate(-90 50 50)"
+          transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-foreground">
-        {Math.round(value)}%
-      </div>
-    </motion.div>
+
+      {showLabel && (
+        <div className="absolute inset-0 grid place-items-center">
+          <span className="text-sm font-semibold text-foreground">
+            {Math.round(clamped)}%
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

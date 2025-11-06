@@ -1,66 +1,91 @@
-import { Slider } from '@/components/ui/slider';
-import { motion } from 'framer-motion';
+"use client";
 
-interface LikertProps {
+import { useCallback, useMemo } from "react";
+import { cn } from "@/lib/utils";
+
+interface LikertScaleProps {
   min: number;
   max: number;
   value: number;
-  onChange: (val: number) => void;
+  onChange: (value: number) => void;
   labels?: string[];
-  useEmojis?: boolean;
 }
 
-export function LikertScale({ min, max, value, onChange, useEmojis = true }: LikertProps) {
-  const marks = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+export function LikertScale({
+  min,
+  max,
+  value,
+  onChange,
+  labels,
+}: LikertScaleProps) {
+  const steps = useMemo(() => {
+    const count = 5;
+    const range = Array.from({ length: count }, (_, i) =>
+      Math.round(min + (i * (max - min)) / (count - 1))
+    );
+    return Array.from(new Set(range));
+  }, [min, max]);
 
-  const getEmoji = (val: number) => {
-    const normalized = (val - min) / (max - min);
-    if (normalized < 0.2) return <span className="text-2xl">😞</span>;
-    if (normalized < 0.4) return <span className="text-2xl">😐</span>;
-    if (normalized < 0.6) return <span className="text-2xl">🙂</span>;
-    if (normalized < 0.8) return <span className="text-2xl">😊</span>;
-    return <span className="text-2xl">😄</span>;
-  };
+  const defaultLabels = [
+    "Pas du tout d’accord",
+    "Plutôt pas d’accord",
+    "Neutre",
+    "Plutôt d’accord",
+    "Tout à fait d’accord",
+  ];
 
-  const handleMarkClick = (val: number) => {
-    onChange(val);
-    if (navigator.vibrate) navigator.vibrate(50);
-  };
+  const optionLabels =
+    labels && labels.length >= 5 ? labels.slice(0, 5) : defaultLabels;
+
+  const select = useCallback((v: number) => onChange(v), [onChange]);
+
+  const move = useCallback(
+    (dir: -1 | 1) => {
+      const idx = Math.max(
+        0,
+        Math.min(steps.length - 1, Math.max(0, steps.indexOf(value)) + dir)
+      );
+      onChange(steps[idx]);
+    },
+    [steps, value, onChange]
+  );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4 p-6 bg-card rounded-3xl shadow-soft border border-accent/20"
+    <div
+      role="radiogroup"
+      aria-label="Échelle de réponse"
+      className="w-full max-w-md mx-auto flex flex-col gap-3"
+      onKeyDown={(e) => {
+        if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          move(-1);
+        } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+          e.preventDefault();
+          move(1);
+        }
+      }}
     >
-      <motion.div
-        animate={{ scale: value > 0 ? 1.05 : 1, boxShadow: value > 0 ? '0 0 10px rgba(165,199,231,0.5)' : 'none' }}
-        transition={{ duration: 0.2 }}
-      >
-        <Slider
-          min={min}
-          max={max}
-          step={1}
-          value={[value]}
-          onValueChange={(v) => onChange(v[0])}
-          className="w-full [&>div]:h-8 [&>div]:w-8"
-        />
-      </motion.div>
-      <div className="flex justify-between text-sm">
-        {marks.map((mark) => (
-          <motion.div
-            key={mark}
-            className="flex flex-col items-center cursor-pointer"
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => handleMarkClick(mark)}
+      {steps.map((v, i) => {
+        const active = v === value;
+        const label = optionLabels[i] ?? String(v);
+        return (
+          <button
+            key={v}
+            role="radio"
+            aria-checked={active}
+            onClick={() => select(v)}
+            className={cn(
+              "w-full rounded-xl border px-4 py-4 transition text-center text-base font-medium",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+              active
+                ? "bg-primary text-[var(--color-primary-foreground)] border-primary shadow"
+                : "bg-card text-foreground border-border hover:bg-[color-mix(in_oklab,var(--color-foreground)_6%,transparent)]"
+            )}
           >
-            <div className="h-3 w-1 bg-border rounded-full" />
-            {useEmojis && getEmoji(mark)}
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

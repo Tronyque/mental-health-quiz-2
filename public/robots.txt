@@ -1,0 +1,15 @@
+# robots.txt — Mental Health Quiz
+# Gère l'accès des robots d'indexation (Google, Bing, etc.)
+
+# Autoriser tous les moteurs à indexer le site, sauf les zones sensibles
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Allow: /
+
+# Indiquer l'emplacement du sitemap
+Sitemap: https://mental-health-quiz.vercel.app/sitemap.xml
+
+# Informations générales
+# Ce site ne collecte pas de données personnelles identifiables.
+# Les réponses du questionnaire sont anonymisées conformément au RGPD.
