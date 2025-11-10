@@ -8,7 +8,9 @@
 @import "tw-animate-css";
 
 /* variante dark : .dark ... */
-@custom-variant dark (&:is(.dark *));
+/* Note: Tailwind provides a built-in "dark" variant (class strategy) so the
+   custom @custom-variant at-rule is unnecessary and unsupported by the CSS
+   parser; remove it to avoid the unknown at-rule error. */
 
 /* =========================================================
    🩵 Variables CSS globales (claires + sombres)
@@ -54,7 +56,7 @@
    🎯 Mapping Tailwind v4 (@theme) → tokens
    ========================================================= */
 
-@theme {
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -126,42 +128,226 @@
 html { scroll-behavior: smooth; }
 
 @layer base {
-  * { @apply border-border outline-ring/50; }
-  body { @apply min-h-screen bg-background text-foreground font-sans antialiased transition-colors duration-300 ease-in-out; }
+  * {
+    box-sizing: border-box;
+    border-color: var(--color-border);
+    /* approximate outline / ring color */
+a {
+button {
+  outline: none;
+  border-radius: 0.5rem; /* approximate rounded-lg */
+}
+button:focus-visible {
+  /* approximate Tailwind ring-2 with accent color */
+.container {
+  max-width: 72rem; /* tailwind max-w-6xl */
+.card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* approximate rounded-2xl */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); /* approximate shadow-sm */
+  padding: 1.5rem; /* p-6 */
+}
+  margin-right: auto;
+  padding-left: 1rem; /* px-4 */
+  padding-right: 1rem;
+}
+}
+  transition-property: color;
+  transition-duration: 150ms;
+}
+a:hover {
+  text-decoration: underline;
+}
+.cookie-banner {
+  position: fixed;
+  bottom: 1rem; /* bottom-4 */
+.cookie-banner button {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  transition: filter 150ms;
+}
+.cookie-banner button:hover {
+  filter: brightness(1.1);
+}
+  backdrop-filter: blur(6px);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); /* approximate shadow-md */
+  padding: 0.75rem 1.25rem; /* py-3 px-5 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  z-index: 50;
+}
+@media (min-width: 768px) {
+  .cookie-banner { flex-direction: row; }
+}
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition-property: color, background-color;
+    transition-duration: 300ms;
+    transition-timing-function: ease-in-out;
+  }
 }
 
-a { @apply text-primary hover:underline transition-colors; }
-button { @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg; }
-
-/* =========================================================
-   💡 Layouts et composants globaux
+a {
+button {
+  outline: none;
+  border-radius: 0.5rem; /* rounded-lg */
+}
+button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-accent);
+.container {
+  max-width: 72rem; /* max-w-6xl */
+.card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); /* shadow-sm */
+  padding: 1.5rem; /* p-6 */
+}
+  margin-right: auto;
+  padding-left: 1rem; /* px-4 */
+  padding-right: 1rem;
+}
+  text-decoration: none;
+  transition-property: color;
+  transition-duration: 150ms;
+}
+a:hover {
+  text-decoration: underline;
+}
+.cookie-banner {
+  position: fixed;
+  bottom: 1rem;
+.cookie-banner button {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  transition: filter 150ms;
+}
+.cookie-banner button:hover {
+  filter: brightness(1.1);
+}
+  backdrop-filter: blur(6px);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); /* shadow-md */
+  padding: 0.75rem 1.25rem; /* px-5 py-3 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  z-index: 50;
+}
+@media (min-width: 768px) {
+  .cookie-banner { flex-direction: row; }
+}
+   /* Layouts et composants globaux
    ========================================================= */
 
-.container { @apply max-w-6xl mx-auto px-4; }
+.container {
+  max-width: 72rem; /* max-w-6xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem; /* px-4 */
+  padding-right: 1rem;
+}
 
-.card { @apply bg-card border border-border rounded-2xl shadow-sm p-6; }
+.card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); /* shadow-sm */
+  padding: 1.5rem; /* p-6 */
+}
 
 .shadow-soft { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06); }
 
 /* =========================================================
    ⚙️ Transitions et animations simples
-   ========================================================= */
-
-.fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+.cookie-banner {
+  position: fixed;
+  bottom: 1rem; /* bottom-4 */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-card);
+  backdrop-filter: blur(6px);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); /* shadow-md */
+  padding-left: 1.25rem; /* px-5 */
+  padding-right: 1.25rem;
+  padding-top: 0.75rem; /* py-3 */
+  padding-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  z-index: 50;
 }
+.cookie-banner button {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  transition: filter 150ms;
+}
+@media (max-width: 640px){ .cookie-banner { font-size: .9rem; } }
 
 /* =========================================================
    🔒 RGPD / Cookies Banner (compact + blur)
    ========================================================= */
 
 .cookie-banner {
-  @apply fixed bottom-4 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur text-foreground border border-border rounded-2xl shadow-md px-5 py-3 flex flex-col md:flex-row gap-3 items-center z-50;
+  position: fixed;
+  bottom: 1rem; /* bottom-4 */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-card);
+  backdrop-filter: blur(6px);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem; /* rounded-2xl */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); /* shadow-md */
+  padding-left: 1.25rem; /* px-5 */
+  padding-right: 1.25rem;
+  padding-top: 0.75rem; /* py-3 */
+  padding-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* gap-3 */
+  align-items: center;
+  z-index: 50;
 }
 .cookie-banner button {
-  @apply px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:brightness-110 transition;
+  padding-left: 1rem; /* px-4 */
+  padding-right: 1rem;
+  padding-top: 0.5rem; /* py-2 */
+  padding-bottom: 0.5rem;
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  transition: filter 150ms;
 }
 @media (max-width: 640px){ .cookie-banner { font-size: .9rem; } }
 

@@ -1,3 +1,7 @@
+// lib/database.types.ts
+// Types générés à la main pour le schéma RGPD/Metabase actuel.
+// Si tu changes le schéma côté Supabase, pense à régénérer ou ajuster ici.
+
 export type Json =
   | string
   | number
@@ -7,142 +11,170 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
-      access_codes: {
-        Row: {
-          code: string
-          consumed_at: string | null
-          created_at: string | null
-          facility_id: string
-          id: string
-        }
-        Insert: {
-          code: string
-          consumed_at?: string | null
-          created_at?: string | null
-          facility_id: string
-          id?: string
-        }
-        Update: {
-          code?: string
-          consumed_at?: string | null
-          created_at?: string | null
-          facility_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "access_codes_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dimensions: {
         Row: {
           id: number
-          max_score: number | null
-          min_score: number | null
           name: string
         }
         Insert: {
           id?: number
-          max_score?: number | null
-          min_score?: number | null
           name: string
         }
         Update: {
           id?: number
-          max_score?: number | null
-          min_score?: number | null
-          name?: string
-        }
-        Relationships: []
-      }
-      facilities: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
           name?: string
         }
         Relationships: []
       }
       questions: {
         Row: {
-          dimension: string
-          id: number
-          inverted: boolean | null
-          max: number
-          min: number
+          id: string          // ex: "q2_3"
+          num: number         // 1..38
           text: string
+          dimension_id: number
+          min: number
+          max: number
+          inverted: boolean
+          source: string | null
         }
         Insert: {
-          dimension: string
-          id: number
-          inverted?: boolean | null
-          max: number
-          min: number
+          id: string
+          num: number
           text: string
-        }
-        Update: {
-          dimension?: string
-          id?: number
-          inverted?: boolean | null
-          max?: number
+          dimension_id: number
           min?: number
-          text?: string
-        }
-        Relationships: []
-      }
-      responses: {
-        Row: {
-          code_id: string | null
-          created_at: string | null
-          facility_id: string
-          id: number
-          question_id: number
-          score: number
-        }
-        Insert: {
-          code_id?: string | null
-          created_at?: string | null
-          facility_id: string
-          id?: number
-          question_id: number
-          score: number
+          max?: number
+          inverted?: boolean
+          source?: string | null
         }
         Update: {
-          code_id?: string | null
-          created_at?: string | null
-          facility_id?: string
-          id?: number
-          question_id?: number
-          score?: number
+          id?: string
+          num?: number
+          text?: string
+          dimension_id?: number
+          min?: number
+          max?: number
+          inverted?: boolean
+          source?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "responses_code_id_fkey"
-            columns: ["code_id"]
+            foreignKeyName: "questions_dimension_id_fkey"
+            columns: ["dimension_id"]
             isOneToOne: false
-            referencedRelation: "access_codes"
+            referencedRelation: "dimensions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      facilities: {
+        Row: {
+          id: string // uuid
+          name: string
+          created_at: string // timestamptz
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      submissions: {
+        Row: {
+          id: string // uuid
+          facility_id: string // uuid
+          pseudo_hash: string // bytea (exposé en base64 par PostgREST)
+          job: string
+          age_range: string
+          seniority: string
+          comment: string | null
+          consented: boolean
+          created_at: string // timestamptz
+          client_ip: string | null // inet
+          user_agent: string | null
+          // pseudo_preimage n'est jamais renvoyé (nettoyé par trigger à l'INSERT)
+          pseudo_preimage: string | null
+        }
+        Insert: {
+          id?: string
+          facility_id: string
+          pseudo_hash?: string // rempli par trigger => inutile de le fournir
+          job: string
+          age_range: string
+          seniority: string
+          comment?: string | null
+          consented?: boolean
+          created_at?: string
+          client_ip?: string | null
+          user_agent?: string | null
+          pseudo_preimage: string // requis à l'insert pour alimenter le trigger
+        }
+        Update: {
+          id?: string
+          facility_id?: string
+          pseudo_hash?: string
+          job?: string
+          age_range?: string
+          seniority?: string
+          comment?: string | null
+          consented?: boolean
+          created_at?: string
+          client_ip?: string | null
+          user_agent?: string | null
+          pseudo_preimage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      responses: {
+        Row: {
+          id: number // bigserial
+          submission_id: string // uuid
+          facility_id: string // uuid
+          question_id: string
+          score: number // 1..5
+          created_at: string // timestamptz
+        }
+        Insert: {
+          id?: number
+          submission_id: string
+          facility_id: string
+          question_id: string
+          score: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          submission_id?: string
+          facility_id?: string
+          question_id?: string
+          score?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responses_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
             referencedColumns: ["id"]
           },
           {
@@ -158,17 +190,19 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "questions"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
     }
     Views: {
-      facility_dimension_scores: {
+      vw_submission_dimension_scores: {
         Row: {
-          avg_score: number | null
-          dimension: string | null
-          facility_id: string | null
-          n: number | null
+          submission_id: string
+          facility_id: string
+          dimension: string
+          n_items: number
+          avg_score: number // NUMERIC -> number
+          submitted_at: string // timestamptz
         }
         Relationships: [
           {
@@ -177,14 +211,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
-          },
+          }
+        ]
+      }
+      vw_facility_dimension_scores: {
+        Row: {
+          facility_id: string
+          dimension: string
+          n_submissions: number
+          avg_score: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responses_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vw_facility_daily_activity: {
+        Row: {
+          facility_id: string
+          day: string // date
+          submissions: number
+          answers: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responses_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }
     Functions: {
-      submit_quiz: {
-        Args: { p_answers: Json; p_code: string }
-        Returns: undefined
+      normalize_score: {
+        Args: { p_value: number; p_min: number; p_max: number; p_inverted: boolean }
+        Returns: number
       }
     }
     Enums: {
@@ -197,7 +265,6 @@ export type Database = {
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
@@ -210,21 +277,13 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends { Row: infer R }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends { Row: infer R }
       ? R
       : never
     : never
@@ -233,23 +292,15 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Insert: infer I }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Insert: infer I }
       ? I
       : never
     : never
@@ -258,23 +309,15 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Update: infer U }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Update: infer U }
       ? U
       : never
     : never
@@ -283,14 +326,10 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
@@ -300,21 +339,15 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
-  public: {
-    Enums: {},
-  },
+  public: { Enums: {} },
 } as const
