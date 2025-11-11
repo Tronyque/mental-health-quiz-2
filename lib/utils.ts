@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 /* =========================================================
    🧱 Fonction utilitaire principale : cn()
@@ -16,11 +16,11 @@ export function cn(...inputs: ClassValue[]) {
    ========================================================= */
 
 export function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("fr-FR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 }
 
@@ -29,13 +29,13 @@ export function formatDate(date: Date | string): string {
    ========================================================= */
 
 export function cleanText(input: string): string {
-  return input.trim().replace(/\s+/g, " ");
+  return input.trim().replace(/\s+/g, ' ');
 }
 
 /* =========================================================
    🧩 Générateur d’ID unique (pour clés React, questions, etc.)
    ========================================================= */
 
-export function uid(prefix = "id"): string {
+export function uid(prefix = 'id'): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }

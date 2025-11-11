@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   ResponsiveContainer,
   RadarChart,
@@ -7,7 +7,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Tooltip,
-} from "recharts";
+} from 'recharts';
 
 type Props = {
   data: Array<{ dimension: string; score: number }>;
@@ -26,11 +26,23 @@ export default function ResultsRadar({ data, getAdvice }: Props) {
             </linearGradient>
           </defs>
           <PolarGrid stroke="hsl(var(--color-foreground)/0.12)" />
-          <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 12, fill: "hsl(var(--color-foreground)/0.6)" }} />
-          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "hsl(var(--color-foreground)/0.5)" }} />
-          <Radar name="Score" dataKey="score" stroke="hsl(var(--color-foreground)/0.35)" fill="url(#radarFill)" />
+          <PolarAngleAxis
+            dataKey="dimension"
+            tick={{ fontSize: 12, fill: 'hsl(var(--color-foreground)/0.6)' }}
+          />
+          <PolarRadiusAxis
+            angle={30}
+            domain={[0, 100]}
+            tick={{ fill: 'hsl(var(--color-foreground)/0.5)' }}
+          />
+          <Radar
+            name="Score"
+            dataKey="score"
+            stroke="hsl(var(--color-foreground)/0.35)"
+            fill="url(#radarFill)"
+          />
           <Tooltip
-            contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--color-border))" }}
+            contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--color-border))' }}
             formatter={(value: number, _n: string, props: any) => [
               `${value}%`,
               getAdvice(props.payload.dimension, value),

@@ -1,33 +1,31 @@
 // hooks/useQuizFlow.ts
-"use client";
+'use client';
 
-import { useState } from "react";
-import { questions } from "@/lib/questions";
-import { createClient } from "@supabase/supabase-js";
+import { useState } from 'react';
+import { questions } from '@/lib/questions';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
 export function useQuizFlow() {
   // ————————————————————————————————————————————————
   // 🔹 États principaux du flux
   // ————————————————————————————————————————————————
-  const [phase, setPhase] = useState<
-    "intro" | "quiz" | "profile" | "results" | "final"
-  >("intro");
-  const [pseudo, setPseudo] = useState("");
+  const [phase, setPhase] = useState<'intro' | 'quiz' | 'profile' | 'results' | 'final'>('intro');
+  const [pseudo, setPseudo] = useState('');
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [profile, setProfile] = useState({
-    facility: "",
-    job: "",
-    age: "",
-    seniority: "",
-    comment: "",
+    facility: '',
+    job: '',
+    age: '',
+    seniority: '',
+    comment: '',
     consent: false,
   });
 
@@ -42,18 +40,18 @@ export function useQuizFlow() {
   // ————————————————————————————————————————————————
   const startQuiz = () => {
     if (!pseudo.trim()) {
-      setError("Merci d’entrer un pseudo.");
+      setError('Merci d’entrer un pseudo.');
       return;
     }
-    setError("");
-    setPhase("quiz");
+    setError('');
+    setPhase('quiz');
   };
 
   const nextQuestion = () => {
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      setPhase("profile");
+      setPhase('profile');
     }
   };
 
@@ -70,12 +68,12 @@ export function useQuizFlow() {
   // ————————————————————————————————————————————————
   const submitQuiz = async () => {
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
-      const response = await fetch("/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           pseudo,
           answers: Object.entries(answers).map(([questionId, value]) => ({
@@ -91,7 +89,7 @@ export function useQuizFlow() {
             comment: profile.comment,
           },
           context: {
-            questionnaireVersion: "v1",
+            questionnaireVersion: 'v1',
             durationSeconds: null,
           },
         }),
@@ -99,10 +97,10 @@ export function useQuizFlow() {
 
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || "Erreur de soumission");
-      setPhase("results");
+      if (!response.ok) throw new Error(data.error || 'Erreur de soumission');
+      setPhase('results');
     } catch (err: any) {
-      console.error("❌ submitQuiz error:", err);
+      console.error('❌ submitQuiz error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -113,19 +111,19 @@ export function useQuizFlow() {
   // 🔁 Réinitialisation complète
   // ————————————————————————————————————————————————
   const reset = () => {
-    setPhase("intro");
-    setPseudo("");
+    setPhase('intro');
+    setPseudo('');
     setAnswers({});
     setStep(0);
     setProfile({
-      facility: "",
-      job: "",
-      age: "",
-      seniority: "",
-      comment: "",
+      facility: '',
+      job: '',
+      age: '',
+      seniority: '',
+      comment: '',
       consent: false,
     });
-    setError("");
+    setError('');
   };
 
   // ————————————————————————————————————————————————

@@ -9,12 +9,12 @@ const nextConfig = {
 
   eslint: { ignoreDuringBuilds: true },
 
-  images: { formats: ["image/avif", "image/webp"] },
+  images: { formats: ['image/avif', 'image/webp'] },
 
   async redirects() {
     return [
       // ✅ Si quelqu’un utilise encore l’ancienne URL, redirige vers la nouvelle
-      { source: "/quiz/intro", destination: "/intro", permanent: true },
+      { source: '/quiz/intro', destination: '/intro', permanent: true },
     ];
   },
 };

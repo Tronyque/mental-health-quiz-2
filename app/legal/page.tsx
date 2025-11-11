@@ -11,7 +11,7 @@ export default function LegalPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center p-6"
+      className="min-h-screen bg-linear-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center p-6"
     >
       <Card className="max-w-3xl w-full rounded-3xl shadow-soft border border-accent/10 bg-card backdrop-blur">
         <CardContent className="p-8 space-y-6">

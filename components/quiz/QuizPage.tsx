@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { LikertScale } from "@/components/LikertScale";
-import { ProgressCircle } from "@/components/ProgressCircle";
-import { AmbientSoundToggle } from "@/components/site/AmbientSoundToggle";
-import { questions, dimensions, normalizeScore } from "@/lib/questions";
-import { useQuizFlow } from "@/hooks/useQuizFlow";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { LikertScale } from '@/components/LikertScale';
+import { ProgressCircle } from '@/components/ProgressCircle';
+import { AmbientSoundToggle } from '@/components/site/AmbientSoundToggle';
+import { questions, dimensions, normalizeScore } from '@/lib/questions';
+import { useQuizFlow } from '@/hooks/useQuizFlow';
 
 import {
   ResponsiveContainer,
@@ -18,25 +18,24 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Tooltip,
-} from "recharts";
+} from 'recharts';
 
 function calculateScores(answers: Record<string, number>) {
   return dimensions.map((dim) => {
     const qs = questions.filter((q) => q.dimension === dim);
     const total = qs.reduce((sum, q) => {
       const raw = answers[q.id] ?? 0;
-      const invert = !!q.inverted || q.dimension === "Stress";
+      const invert = !!q.inverted || q.dimension === 'Stress';
       return sum + normalizeScore(raw, q.scale.min, q.scale.max, invert);
     }, 0);
     return total / qs.length;
   });
 }
 
-
 function getColor(score: number) {
-  if (score > 70) return "#B2D8B2";
-  if (score > 50) return "#FFD3E0";
-  return "#A7C7E7";
+  if (score > 70) return '#B2D8B2';
+  if (score > 50) return '#FFD3E0';
+  return '#A7C7E7';
 }
 
 function getAdvice(dim: string, score: number) {
@@ -66,22 +65,20 @@ export default function QuizPage() {
   // ————————————————————————————————————————————————
   // Phase 1 – Pseudo (Intro)
   // ————————————————————————————————————————————————
-  if (phase === "intro") {
+  if (phase === 'intro') {
     return (
       <>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center p-4"
+          className="from-background via-secondary/10 to-accent/10 flex min-h-screen items-center justify-center bg-gradient-to-br p-4"
         >
-          <div className="max-w-lg w-full bg-card rounded-3xl shadow-soft p-8 border border-accent/10 space-y-6">
-            <h1 className="text-2xl font-bold text-center text-primary">
-              Questionnaire Bien-Être
-            </h1>
-            <p className="text-muted-foreground text-center px-4">
-              Ce questionnaire est <strong>anonyme</strong> et vise à mieux
-              comprendre le bien-être au travail. <br />
+          <div className="bg-card shadow-soft border-accent/10 w-full max-w-lg space-y-6 rounded-3xl border p-8">
+            <h1 className="text-primary text-center text-2xl font-bold">Questionnaire Bien-Être</h1>
+            <p className="text-muted-foreground px-4 text-center">
+              Ce questionnaire est <strong>anonyme</strong> et vise à mieux comprendre le bien-être
+              au travail. <br />
               Choisissez simplement un pseudo pour commencer.
             </p>
             <div>
@@ -102,7 +99,7 @@ export default function QuizPage() {
             <Button
               onClick={startQuiz}
               disabled={!pseudo.trim()}
-              className="w-full rounded-full bg-gradient-to-r from-primary to-secondary"
+              className="from-primary to-secondary w-full rounded-full bg-gradient-to-r"
             >
               Commencer le questionnaire
             </Button>
@@ -116,7 +113,7 @@ export default function QuizPage() {
   // ————————————————————————————————————————————————
   // Phase 2 – Questions
   // ————————————————————————————————————————————————
-  if (phase === "quiz") {
+  if (phase === 'quiz') {
     return (
       <>
         <motion.div
@@ -125,21 +122,21 @@ export default function QuizPage() {
           animate={{
             opacity: 1,
             background: [
-              "linear-gradient(135deg, #ecfdf5, #d1fae5)",
-              "linear-gradient(135deg, #e0f2fe, #bae6fd)",
-              "linear-gradient(135deg, #f0fdfa, #ccfbf1)",
+              'linear-gradient(135deg, #ecfdf5, #d1fae5)',
+              'linear-gradient(135deg, #e0f2fe, #bae6fd)',
+              'linear-gradient(135deg, #f0fdfa, #ccfbf1)',
             ],
           }}
           transition={{
             duration: 0.8,
-            ease: "easeInOut",
+            ease: 'easeInOut',
             repeat: Infinity,
-            repeatType: "reverse",
+            repeatType: 'reverse',
           }}
-          className="min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-500"
+          className="flex min-h-screen flex-col items-center justify-center p-4 transition-all duration-500"
         >
-          <div className="max-w-lg w-full bg-card rounded-3xl shadow-soft p-8 border border-accent/10 flex flex-col items-center">
-            <div className="flex justify-center mb-6">
+          <div className="bg-card shadow-soft border-accent/10 flex w-full max-w-lg flex-col items-center rounded-3xl border p-8">
+            <div className="mb-6 flex justify-center">
               <ProgressCircle value={progress} autoColor />
             </div>
 
@@ -149,8 +146,8 @@ export default function QuizPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className="text-xl font-semibold text-center text-foreground mb-8 leading-relaxed"
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="text-foreground mb-8 text-center text-xl leading-relaxed font-semibold"
               >
                 {questions[step].text}
               </motion.h2>
@@ -162,21 +159,20 @@ export default function QuizPage() {
               value={answers[questions[step].id] ?? 0}
               onChange={(val) => handleAnswer(questions[step].id, val)}
               labels={[
-                questions[step].scale.labels?.[0] ?? "Pas du tout d’accord",
-                questions[step].scale.labels?.[1] ?? "Tout à fait d’accord",
+                questions[step].scale.labels?.[0] ?? 'Pas du tout d’accord',
+                questions[step].scale.labels?.[1] ?? 'Tout à fait d’accord',
               ]}
-            
             />
 
             <Button
               onClick={nextQuestion}
               disabled={!answers[questions[step].id]}
-              className="mt-8 w-full rounded-full bg-gradient-to-r from-primary to-secondary hover:brightness-110"
+              className="from-primary to-secondary mt-8 w-full rounded-full bg-gradient-to-r hover:brightness-110"
             >
-              {step === questions.length - 1 ? "Terminer" : "Suivant"}
+              {step === questions.length - 1 ? 'Terminer' : 'Suivant'}
             </Button>
 
-            <p className="text-sm text-muted-foreground mt-3">
+            <p className="text-muted-foreground mt-3 text-sm">
               Question {step + 1} sur {questions.length}
             </p>
           </div>
@@ -189,19 +185,17 @@ export default function QuizPage() {
   // ————————————————————————————————————————————————
   // Phase 3 – Profil anonyme
   // ————————————————————————————————————————————————
-  if (phase === "profile") {
+  if (phase === 'profile') {
     return (
       <>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-secondary/10 to-accent/10"
+          className="from-background via-secondary/10 to-accent/10 flex min-h-screen items-center justify-center bg-gradient-to-br p-4"
         >
-          <div className="max-w-md w-full bg-card p-8 rounded-3xl shadow-soft border border-accent/10 space-y-6">
-            <h2 className="text-2xl font-semibold text-center text-primary">
-              🌿 Dernière étape
-            </h2>
+          <div className="bg-card shadow-soft border-accent/10 w-full max-w-md space-y-6 rounded-3xl border p-8">
+            <h2 className="text-primary text-center text-2xl font-semibold">🌿 Dernière étape</h2>
             <p className="text-muted-foreground text-center">
               Ces informations sont <strong>anonymes</strong> et facultatives.
             </p>
@@ -209,20 +203,46 @@ export default function QuizPage() {
             <div className="space-y-4">
               {(
                 [
-                  ["Établissement", "facility", ["Les Jardins du Soleil", "Résidence Harmonie", "Villa des Lilas", "Les Chênes Bleus"]],
-                  ["Fonction / Emploi", "job", ["Aide-soignant(e)", "Infirmier(e)", "Agent de service", "Animateur(trice)", "Cuisinier(e)", "Direction / Administration"]],
-                  ["Tranche d’âge", "age", ["Moins de 25 ans", "25-35 ans", "36-50 ans", "51 ans et plus"]],
-                  ["Ancienneté", "seniority", ["Moins d’un an", "1 à 3 ans", "4 à 7 ans", "8 ans et +"]],
+                  [
+                    'Établissement',
+                    'facility',
+                    [
+                      'Les Jardins du Soleil',
+                      'Résidence Harmonie',
+                      'Villa des Lilas',
+                      'Les Chênes Bleus',
+                    ],
+                  ],
+                  [
+                    'Fonction / Emploi',
+                    'job',
+                    [
+                      'Aide-soignant(e)',
+                      'Infirmier(e)',
+                      'Agent de service',
+                      'Animateur(trice)',
+                      'Cuisinier(e)',
+                      'Direction / Administration',
+                    ],
+                  ],
+                  [
+                    'Tranche d’âge',
+                    'age',
+                    ['Moins de 25 ans', '25-35 ans', '36-50 ans', '51 ans et plus'],
+                  ],
+                  [
+                    'Ancienneté',
+                    'seniority',
+                    ['Moins d’un an', '1 à 3 ans', '4 à 7 ans', '8 ans et +'],
+                  ],
                 ] as [string, keyof typeof profile, string[]][]
               ).map(([label, key, options]) => (
                 <div key={key}>
                   <Label>{label}</Label>
                   <select
                     value={profile[key] as string}
-                    onChange={(e) =>
-                      setProfile({ ...profile, [key]: e.target.value })
-                    }
-                    className="w-full mt-1 border border-input rounded-lg p-2 bg-background"
+                    onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                    className="border-input bg-background mt-1 w-full rounded-lg border p-2"
                   >
                     <option value="">Sélectionnez</option>
                     {options.map((opt) => (
@@ -234,19 +254,14 @@ export default function QuizPage() {
                 </div>
               ))}
 
-              <div className="flex items-center gap-2 mt-4">
+              <div className="mt-4 flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="consent"
                   checked={profile.consent}
-                  onChange={(e) =>
-                    setProfile({ ...profile, consent: e.target.checked })
-                  }
+                  onChange={(e) => setProfile({ ...profile, consent: e.target.checked })}
                 />
-                <label
-                  htmlFor="consent"
-                  className="text-sm text-muted-foreground"
-                >
+                <label htmlFor="consent" className="text-muted-foreground text-sm">
                   J’accepte que mes réponses anonymes soient utilisées à des fins internes.
                 </label>
               </div>
@@ -262,9 +277,9 @@ export default function QuizPage() {
                 !profile.consent ||
                 loading
               }
-              className="w-full bg-gradient-to-r from-primary to-secondary hover:brightness-110 transition-all duration-300 shadow-md rounded-full"
+              className="from-primary to-secondary w-full rounded-full bg-gradient-to-r shadow-md transition-all duration-300 hover:brightness-110"
             >
-              {loading ? "Envoi..." : "Voir mes résultats"}
+              {loading ? 'Envoi...' : 'Voir mes résultats'}
             </Button>
           </div>
         </motion.div>
@@ -276,7 +291,7 @@ export default function QuizPage() {
   // ————————————————————————————————————————————————
   // Phase 4 – Résultats finaux
   // ————————————————————————————————————————————————
-  if (phase === "results") {
+  if (phase === 'results') {
     const scores = calculateScores(answers);
     const chartData = dimensions.map((dim, i) => ({
       dimension: dim,
@@ -290,22 +305,16 @@ export default function QuizPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex flex-col items-center p-4"
+          className="from-background via-secondary/10 to-accent/10 flex min-h-screen flex-col items-center bg-gradient-to-br p-4"
         >
-          <h1 className="text-3xl font-bold mb-6 text-primary text-center">
-            Vos Résultats
-          </h1>
+          <h1 className="text-primary mb-6 text-center text-3xl font-bold">Vos Résultats</h1>
 
           <div className="w-full max-w-lg">
             <ResponsiveContainer width="100%" height={350}>
               {/* @ts-ignore – recharts typings are incomplete */}
-                <RadarChart data={chartData} outerRadius="80%" isAnimationActive>
-
+              <RadarChart data={chartData} outerRadius="80%" isAnimationActive>
                 <PolarGrid stroke="#e0e0e0" />
-                <PolarAngleAxis
-                  dataKey="dimension"
-                  tick={{ fontSize: 12, fill: "#4B5563" }}
-                />
+                <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 12, fill: '#4B5563' }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} />
                 <Radar
                   name="Votre Score"
@@ -316,9 +325,9 @@ export default function QuizPage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    maxWidth: "200px",
-                    whiteSpace: "normal",
-                    fontSize: "14px",
+                    maxWidth: '200px',
+                    whiteSpace: 'normal',
+                    fontSize: '14px',
                   }}
                   formatter={(value: number, _name: string, props: any) => [
                     `${value}%`,

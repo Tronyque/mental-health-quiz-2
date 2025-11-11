@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Music, Volume2, VolumeX, Waves, Wind, Droplets } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Music, Volume2, VolumeX, Waves, Wind, Droplets } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SoundOption {
   label: string;
@@ -13,23 +13,23 @@ interface SoundOption {
 
 const SOUND_OPTIONS: SoundOption[] = [
   {
-    label: "Cascade de bambou",
-    file: "/sounds/bamboo-waterfall-15-second-loop-395563.mp3",
+    label: 'Cascade de bambou',
+    file: '/sounds/bamboo-waterfall-15-second-loop-395563.mp3',
     icon: <Waves className="text-emerald-600" />,
   },
   {
-    label: "Ambre paisible",
-    file: "/sounds/amber-loop-2-416805.mp3",
+    label: 'Ambre paisible',
+    file: '/sounds/amber-loop-2-416805.mp3',
     icon: <Music className="text-emerald-500" />,
   },
   {
-    label: "Bulles d’eau",
-    file: "/sounds/bubbley-loop-2-413071.mp3",
+    label: 'Bulles d’eau',
+    file: '/sounds/bubbley-loop-2-413071.mp3',
     icon: <Droplets className="text-emerald-400" />,
   },
   {
-    label: "Ambiance zen corporate",
-    file: "/sounds/peaceful-corporate-ambient-loop-234159.mp3",
+    label: 'Ambiance zen corporate',
+    file: '/sounds/peaceful-corporate-ambient-loop-234159.mp3',
     icon: <Wind className="text-emerald-500" />,
   },
 ];
@@ -90,7 +90,7 @@ export function AmbientSoundToggle() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed right-6 bottom-6 z-50">
       <audio ref={audioRef} src={currentTrack.file} loop preload="auto" />
 
       <motion.div
@@ -104,10 +104,10 @@ export function AmbientSoundToggle() {
           onClick={() => setSoundEnabled(!soundEnabled)}
           variant="outline"
           size="icon"
-          className={`rounded-full shadow-md border-emerald-300/40 bg-background/60 backdrop-blur-md hover:scale-105 transition-all ${
-            soundEnabled ? "" : "opacity-60"
+          className={`bg-background/60 rounded-full border-emerald-300/40 shadow-md backdrop-blur-md transition-all hover:scale-105 ${
+            soundEnabled ? '' : 'opacity-60'
           }`}
-          title={soundEnabled ? "Désactiver tous les sons" : "Activer le son"}
+          title={soundEnabled ? 'Désactiver tous les sons' : 'Activer le son'}
         >
           {soundEnabled ? (
             <Volume2 className="text-emerald-600" />
@@ -121,21 +121,21 @@ export function AmbientSoundToggle() {
           onClick={() => setIsPlaying(!isPlaying)}
           variant="outline"
           size="icon"
-          className="rounded-full shadow-md border-emerald-300/40 bg-background/60 backdrop-blur-md hover:scale-105 transition-all"
-          title={isPlaying ? "Mettre la musique en pause" : "Lancer la musique"}
+          className="bg-background/60 rounded-full border-emerald-300/40 shadow-md backdrop-blur-md transition-all hover:scale-105"
+          title={isPlaying ? 'Mettre la musique en pause' : 'Lancer la musique'}
         >
           <motion.div
             animate={{ rotate: isPlaying ? 360 : 0 }}
-            transition={{ duration: 8, repeat: isPlaying ? Infinity : 0, ease: "linear" }}
+            transition={{ duration: 8, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
           >
-            <Music className={isPlaying ? "text-emerald-600" : "text-muted-foreground"} />
+            <Music className={isPlaying ? 'text-emerald-600' : 'text-muted-foreground'} />
           </motion.div>
         </Button>
 
         {/* 🎚️ Menu contextuel des sons */}
         <motion.button
           onClick={() => setShowMenu(!showMenu)}
-          className="bg-emerald-50 border border-emerald-200 rounded-full p-2 hover:bg-emerald-100 shadow-sm transition-all"
+          className="rounded-full border border-emerald-200 bg-emerald-50 p-2 shadow-sm transition-all hover:bg-emerald-100"
           title="Changer d'ambiance sonore"
         >
           <Waves className="text-emerald-700" />
@@ -148,17 +148,17 @@ export function AmbientSoundToggle() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
               transition={{ duration: 0.25 }}
-              className="absolute bottom-14 right-0 bg-white/90 backdrop-blur-lg shadow-lg rounded-2xl border border-emerald-100 p-3 w-56 space-y-2"
+              className="absolute right-0 bottom-14 w-56 space-y-2 rounded-2xl border border-emerald-100 bg-white/90 p-3 shadow-lg backdrop-blur-lg"
             >
               {SOUND_OPTIONS.map((opt) => (
                 <motion.div
                   key={opt.file}
                   onClick={() => handleTrackChange(opt)}
                   whileHover={{ scale: 1.03 }}
-                  className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl p-2 transition ${
                     opt.file === currentTrack.file
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "hover:bg-emerald-50"
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'hover:bg-emerald-50'
                   }`}
                 >
                   {opt.icon}

@@ -98,12 +98,12 @@ export function CookieConsent() {
                 Préférences de cookies
               </h3>
               <div className="flex flex-col gap-2 text-sm mb-4">
-                <label className="flex justify-between items-center border-b border-[var(--border)] py-2">
+                <label className="flex justify-between items-center border-b border-(--border) py-2">
                   <span>Essentiels (toujours actifs)</span>
                   <input type="checkbox" checked disabled />
                 </label>
 
-                <label className="flex justify-between items-center border-b border-[var(--border)] py-2">
+                <label className="flex justify-between items-center border-b border-(--border) py-2">
                   <span>Statistiques anonymes</span>
                   <input
                     type="checkbox"

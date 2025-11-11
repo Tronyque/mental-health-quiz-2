@@ -78,7 +78,7 @@ export function LikertScale({
               "w-full rounded-xl border px-4 py-4 transition text-center text-base font-medium",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
               active
-                ? "bg-primary text-[var(--color-primary-foreground)] border-primary shadow"
+                ? "bg-primary text-(--color-primary-foreground) border-primary shadow"
                 : "bg-card text-foreground border-border hover:bg-[color-mix(in_oklab,var(--color-foreground)_6%,transparent)]"
             )}
           >

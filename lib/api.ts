@@ -1,7 +1,7 @@
 // lib/api.ts
 export type AnswerPayload = {
   question_id: string; // id question côté UI
-  score: number;       // valeur 1..5
+  score: number; // valeur 1..5
 };
 
 export type ProfileData = {
@@ -21,7 +21,7 @@ export async function submitQuiz(
   answers: AnswerPayload[],
   profile: ProfileData,
   consent = true,
-  context: Record<string, unknown> = {}
+  context: Record<string, unknown> = {},
 ): Promise<SubmitResponse> {
   const payload = {
     pseudo: pseudo.trim(),
@@ -34,14 +34,14 @@ export async function submitQuiz(
     context,
   };
 
-  const res = await fetch("/submit", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
+  const res = await fetch('/submit', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
-    let msg = "Erreur lors de la soumission";
+    let msg = 'Erreur lors de la soumission';
     try {
       const data = await res.json();
       if (data?.error) msg = data.error;

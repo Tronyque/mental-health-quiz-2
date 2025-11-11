@@ -1,5 +1,5 @@
 // lib/quizUtils.ts
-import { questions, normalizeScore } from "@/lib/questions";
+import { questions, normalizeScore } from '@/lib/questions';
 
 export type DimensionScore = {
   dimension: string;
@@ -7,9 +7,7 @@ export type DimensionScore = {
   count: number;
 };
 
-export function computeDimensionScores(
-  responses: Record<string, number>
-): DimensionScore[] {
+export function computeDimensionScores(responses: Record<string, number>): DimensionScore[] {
   const grouped: Record<string, { total: number; count: number }> = {};
 
   for (const q of questions) {

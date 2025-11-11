@@ -1,15 +1,15 @@
-"use client";
-import { motion } from "framer-motion";
-import { useTokenColor } from "@/lib/useTokenColor";
+'use client';
+import { motion } from 'framer-motion';
+import { useTokenColor } from '@/lib/useTokenColor';
 
 interface Props {
-  value: number;            // 0..100
-  size?: number;            // px – diamètre du cercle (par défaut 112)
-  thickness?: number;       // px – épaisseur du trait (par défaut 10)
-  showLabel?: boolean;      // afficher le % au centre (par défaut true)
-  autoColor?: boolean;      // adapte la couleur selon la progression
+  value: number; // 0..100
+  size?: number; // px – diamètre du cercle (par défaut 112)
+  thickness?: number; // px – épaisseur du trait (par défaut 10)
+  showLabel?: boolean; // afficher le % au centre (par défaut true)
+  autoColor?: boolean; // adapte la couleur selon la progression
   trackColor?: string;
-  progressColor?: string;   // force une couleur
+  progressColor?: string; // force une couleur
 }
 
 export function ProgressCircle({
@@ -21,10 +21,10 @@ export function ProgressCircle({
   trackColor,
   progressColor,
 }: Props) {
-  const primary = useTokenColor("--color-primary", "#7da6d2");
-  const secondary = useTokenColor("--color-secondary", "#9ac9aa");
-  const accent = useTokenColor("--color-accent", "#e9e7da");
-  const ring = useTokenColor("--color-ring", "#6d9bc4");
+  const primary = useTokenColor('--color-primary', '#7da6d2');
+  const secondary = useTokenColor('--color-secondary', '#9ac9aa');
+  const accent = useTokenColor('--color-accent', '#e9e7da');
+  const ring = useTokenColor('--color-ring', '#6d9bc4');
 
   const color = (() => {
     if (progressColor) return progressColor;
@@ -48,10 +48,10 @@ export function ProgressCircle({
       className="relative"
       style={{ width: size, height: size }}
     >
-      <svg className="w-full h-full" viewBox="0 0 100 100">
+      <svg className="h-full w-full" viewBox="0 0 100 100">
         {/* piste */}
         <circle
-          stroke={trackColor || "var(--color-border)"}
+          stroke={trackColor || 'var(--color-border)'}
           strokeWidth={thickness}
           fill="transparent"
           r={radius}
@@ -70,15 +70,13 @@ export function ProgressCircle({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           transform="rotate(-90 50 50)"
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
         />
       </svg>
 
       {showLabel && (
         <div className="absolute inset-0 grid place-items-center">
-          <span className="text-sm font-semibold text-foreground">
-            {Math.round(clamped)}%
-          </span>
+          <span className="text-foreground text-sm font-semibold">{Math.round(clamped)}%</span>
         </div>
       )}
     </div>

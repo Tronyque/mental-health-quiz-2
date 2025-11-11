@@ -42,7 +42,7 @@ const QuestionUI: FC<QuestionUIProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background via-secondary/10 to-accent/10 px-4 py-6"
+      className="flex flex-col items-center justify-center min-h-screen bg-linear-to-br from-background via-secondary/10 to-accent/10 px-4 py-6"
     >
       {/* ✅ Cercle de progression centré */}
       <div className="w-full flex justify-center mb-6">
@@ -95,7 +95,7 @@ const QuestionUI: FC<QuestionUIProps> = ({
             <Button
               onClick={onNext}
               disabled={value === 0}
-              className="rounded-full bg-gradient-to-r from-primary to-secondary hover:brightness-110"
+              className="rounded-full bg-linear-to-r from-primary to-secondary hover:brightness-110"
             >
               {isLast ? "Terminer" : "Suivant"}
               <ChevronRight className="h-4 w-4 ml-1" />
