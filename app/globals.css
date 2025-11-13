@@ -2,88 +2,89 @@
    🌈 Global Styles — TailwindCSS v4 + Next.js 15
    ========================================================= */
 
-/* Tailwind v4 */
+/* Tailwind v4 core + animations */
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
 /* =========================================================
-   🎯 Tokens Tailwind v4 (HSL sans hsl()) via @theme
+   🎯 Tokens Tailwind v4 (HSL components only) via @theme
    ========================================================= */
 @theme {
-  /* Rayons et polices optionnels */
+  /* Rayon global (utilisé par rounded utilities) */
   --radius: 1rem;
 
-  /* Palette claire (HSL components only) */
-  --color-background: 210 33% 98%;   /* très clair #F7F8FA */
-  --color-foreground: 222 47% 11%;   /* sombre lisible */
+  /* —— Palette CLARE (aucun rose) —— */
+  /* Base */
+  --color-background: 210 33% 98%;    /* ≈ #F7F8FA */
+  --color-foreground: 222 47% 11%;    /* ≈ #0F172A (bleu-gris foncé) */
 
-  --color-card: 0 0% 100%;
+  /* Surfaces */
+  --color-card: 0 0% 100%;            /* blanc */
   --color-card-foreground: 222 47% 11%;
-
   --color-popover: 0 0% 100%;
   --color-popover-foreground: 222 47% 11%;
 
-  /* Primaire bleu doux */
-  --color-primary: 211 56% 62%;      /* ≈ #7da6d2 */
+  /* Actions & accents (BLEU / VERT – no pink) */
+  --color-primary: 210 44% 55%;       /* ≈ #5B8DBF (bleu doux) */
   --color-primary-foreground: 0 0% 100%;
-
-  /* Secondaire vert doux */
-  --color-secondary: 142 30% 66%;    /* ≈ #9ac9aa */
+  --color-secondary: 157 25% 62%;     /* ≈ #88B7A5 (vert doux) */
   --color-secondary-foreground: 222 47% 11%;
-
-  /* Accent sable */
-  --color-accent: 48 32% 90%;        /* ≈ #e9e7da */
+  --color-accent: 210 16% 92%;        /* ≈ #E9ECEF (gris bleu clair) */
   --color-accent-foreground: 222 47% 11%;
 
-  /* Muted / Texte secondaire */
-  --color-muted: 215 16% 47%;        /* ≈ #6b7280 */
+  /* Texte atténué / aides */
+  --color-muted: 215 16% 47%;         /* ≈ #64748B */
   --color-muted-foreground: 215 16% 47%;
 
+  /* États */
   --color-destructive: 0 84% 60%;
   --color-destructive-foreground: 210 40% 98%;
 
-  --color-border: 214 32% 91%;       /* ≈ #e5e7eb */
-  --color-input: 214 32% 91%;
-  --color-ring: 217 91% 60%;
+  /* Contours / inputs / focus */
+  --color-border: 210 18% 84%;        /* ≈ #D0D7DE */
+  --color-input: 210 18% 84%;
+  --color-ring: 217 91% 60%;          /* focus ring (bleu) */
 
-  /* Ombres (tu peux garder tes presets) */
+  /* Ombres (inchangées, en RGBA) */
   --shadow-1: 0 4px 14px rgba(0, 0, 0, 0.05);
   --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-3: 0 14px 40px rgba(0, 0, 0, 0.12);
 }
 
 /* =========================================================
-   🖤 Mode sombre : surcharge des mêmes tokens (HSL)
+   🖤 MODE SOMBRE (surcharge des mêmes tokens)
    ========================================================= */
 :root.dark, [data-theme="dark"] {
-  --color-background: 222 85% 5%;
-  --color-foreground: 210 40% 98%;
+  /* Base */
+  --color-background: 218 44% 10%;    /* ≈ #0E1624 (bleu nuit) */
+  --color-foreground: 210 40% 98%;    /* ≈ #F1F5F9 */
 
-  --color-card: 222 85% 7%;
+  /* Surfaces */
+  --color-card: 217 33% 18%;          /* ≈ #243247 */
   --color-card-foreground: 210 40% 98%;
-
-  --color-popover: 222 85% 7%;
+  --color-popover: 217 33% 18%;
   --color-popover-foreground: 210 40% 98%;
 
-  --color-primary: 211 56% 62%;
+  /* Actions & accents */
+  --color-primary: 206 50% 62%;       /* ≈ #6DA4CE (bleu désaturé) */
   --color-primary-foreground: 222 47% 11%;
-
-  --color-secondary: 142 30% 40%;
+  --color-secondary: 150 30% 61%;     /* ≈ #7DB99B (vert doux) */
   --color-secondary-foreground: 210 40% 98%;
-
-  --color-accent: 225 16% 20%;
+  --color-accent: 217 33% 18%;        /* ≈ #1E293B / #243247 */
   --color-accent-foreground: 210 40% 98%;
 
+  /* Texte atténué */
   --color-muted: 215 20% 65%;
   --color-muted-foreground: 215 20% 65%;
 
+  /* États / contours / focus */
   --color-destructive: 0 63% 31%;
   --color-destructive-foreground: 210 40% 98%;
-
   --color-border: 217 33% 18%;
   --color-input: 217 33% 18%;
   --color-ring: 213 94% 68%;
 
+  /* Ombres (version sombre) */
   --shadow-1: 0 6px 18px rgba(0, 0, 0, 0.35);
   --shadow-2: 0 10px 26px rgba(0, 0, 0, 0.45);
   --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
@@ -111,6 +112,10 @@ html { scroll-behavior: smooth; }
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  ::selection {
+    background: hsl(var(--color-primary) / 0.25);
+  }
+
   a {
     color: inherit;
     text-decoration: none;
@@ -131,7 +136,7 @@ html { scroll-behavior: smooth; }
    📦 Layouts et composants globaux
    ========================================================= */
 .container {
-  max-width: 72rem; /* max-w-6xl */
+  max-width: 72rem;                 /* max-w-6xl */
   margin-inline: auto;
   padding-inline: 1rem;
 }
@@ -139,41 +144,39 @@ html { scroll-behavior: smooth; }
 .card {
   background-color: hsl(var(--color-card));
   border: 1px solid hsl(var(--color-border));
-  border-radius: 1rem; /* rounded-2xl */
+  border-radius: 1rem;              /* rounded-2xl */
   box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-  padding: 1.5rem; /* p-6 */
+  padding: 1.5rem;                  /* p-6 */
 }
 
-.shadow-soft {
-  box-shadow: var(--shadow-1);
-}
+.shadow-soft { box-shadow: var(--shadow-1); }
 
 /* =========================================================
    🔒 RGPD / Cookies Banner (compact + blur)
    ========================================================= */
 .cookie-banner {
   position: fixed;
-  bottom: 1rem; /* bottom-4 */
+  bottom: 1rem;                     /* bottom-4 */
   left: 50%;
   transform: translateX(-50%);
   background-color: hsl(var(--color-card));
   backdrop-filter: blur(6px);
   color: hsl(var(--color-foreground));
   border: 1px solid hsl(var(--color-border));
-  border-radius: 1rem; /* rounded-2xl */
+  border-radius: 1rem;              /* rounded-2xl */
   box-shadow: 0 6px 18px rgba(0,0,0,0.12); /* shadow-md */
-  padding: 0.75rem 1.25rem; /* py-3 px-5 */
+  padding: 0.75rem 1.25rem;         /* py-3 px-5 */
   display: flex;
   flex-direction: column;
-  gap: 0.75rem; /* gap-3 */
+  gap: 0.75rem;                     /* gap-3 */
   align-items: center;
   z-index: 50;
 }
 .cookie-banner button {
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  border-radius: 9999px; /* rounded-full */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+  padding: 0.5rem 1rem;             /* px-4 py-2 */
+  border-radius: 9999px;            /* rounded-full */
+  font-size: 0.875rem;              /* text-sm */
+  font-weight: 500;                 /* font-medium */
   background-color: hsl(var(--color-primary));
   color: hsl(var(--color-primary-foreground));
   transition: filter 150ms;
@@ -185,7 +188,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* =========================================================
-   🩶 Scrollbar
+   🩶 Scrollbar (WebKit)
    ========================================================= */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb {

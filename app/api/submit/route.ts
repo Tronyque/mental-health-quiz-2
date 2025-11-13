@@ -4,10 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import type { Database, TablesInsert } from '@/lib/database.types';
 
+export const runtime = 'nodejs';         // ✅ secrets côté serveur
+export const dynamic = 'force-dynamic';  // ✅ pas de cache
+
 // ---- Schemas ----
 const AnswerSchema = z.object({
-  questionId: z.string().min(2), // ex: "q2_3"
-  value: z.number().int().min(1).max(5),
+  questionId: z.string().min(2),          // ex: "q2_3"
+  value: z.number().int().min(1).max(5),  // Likert 1..5
 });
 
 const ProfileSchema = z.object({
@@ -29,7 +32,6 @@ const PayloadSchema = z.object({
   answers: z.array(AnswerSchema).min(1),
   consent: z.boolean(),
   profile: ProfileSchema,
-  // Contexte optionnel, conservé si tu veux l’écrire ailleurs (logs)
   context: z
     .object({
       questionnaireVersion: z.string().default('v1'),
@@ -49,12 +51,20 @@ export async function POST(req: NextRequest) {
     if (!url || !serviceKey) {
       return NextResponse.json(
         { error: 'Supabase non configuré (URL/Service Role Key manquants)' },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
-    const body = await req.json();
-    const payload = PayloadSchema.parse(body);
+    // ✅ parse + erreurs 400 détaillées
+    const json = await req.json();
+    const parsed = PayloadSchema.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Payload invalide', issues: parsed.error.issues },
+        { status: 400 }
+      );
+    }
+    const payload = parsed.data;
 
     if (!payload.consent) {
       return NextResponse.json({ error: 'Consent required' }, { status: 400 });
@@ -67,7 +77,9 @@ export async function POST(req: NextRequest) {
     const ua = req.headers.get('user-agent') ?? undefined;
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
 
-    // 1) Trouver ou créer l’établissement
+    // 1) Trouver ou créer l’établissement — éviter doublons
+    // 👉 Recommandé : contrainte UNIQUE(name) côté DB
+    //    puis upsert ici :
     const { data: fac, error: facSelErr } = await supabase
       .from('facilities')
       .select('id')
@@ -97,6 +109,8 @@ export async function POST(req: NextRequest) {
       consented: payload.consent,
       client_ip: ip ?? null,
       user_agent: ua ?? null,
+      // Option : stocker quelques champs de context si présents
+      // questionnaire_version: payload.context.questionnaireVersion ?? 'v1',
     };
 
     const { data: sub, error: subErr } = await supabase
@@ -117,13 +131,19 @@ export async function POST(req: NextRequest) {
     const { error: respErr } = await supabase.from('responses').insert(rows);
     if (respErr) throw respErr;
 
-    // Réponse : pas de score calculé ici (les vues DB s’en chargent)
     return NextResponse.json({ ok: true, submissionId: sub.id }, { status: 201 });
   } catch (e: any) {
     console.error('submit route error:', e);
+
+    // Erreur DB/serveur → 500 ; requète invalide → 400
+    const status =
+      typeof e?.code === 'string' || e?.message?.includes('duplicate key')
+        ? 400
+        : 500;
+
     return NextResponse.json(
-      { ok: false, error: e?.message ?? 'Invalid request' },
-      { status: 400 },
+      { ok: false, error: e?.message ?? 'Server error' },
+      { status }
     );
   }
 }

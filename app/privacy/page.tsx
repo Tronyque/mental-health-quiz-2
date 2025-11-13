@@ -1,95 +1,77 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function PrivacyPage() {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="min-h-screen bg-linear-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center p-6"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="min-h-dvh bg-gradient-to-br from-background via-secondary/10 to-accent/10 flex items-center justify-center p-6"
     >
-      <Card className="max-w-3xl w-full rounded-3xl shadow-soft border border-accent/10 bg-card backdrop-blur">
+      <Card className="w-full max-w-3xl rounded-3xl border border-border/60 shadow-2xl bg-card/90 supports-[backdrop-filter]:bg-card/70">
         <CardContent className="p-8 space-y-6">
-          <motion.h1
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-            className="text-3xl font-bold text-primary text-center"
-          >
+          <h1 className="text-3xl font-bold text-primary text-center">
             Politique de Confidentialité
-          </motion.h1>
+          </h1>
 
-          <p className="text-muted-foreground text-center">
+          <p className="text-center text-muted-foreground">
             Dernière mise à jour : <strong>10 octobre 2025</strong>
           </p>
 
-          <section className="space-y-3 text-sm text-foreground leading-relaxed">
-            <h2 className="text-xl font-semibold text-primary">1. Objectif du questionnaire</h2>
+          <section className="space-y-3 text-sm leading-relaxed text-foreground">
+            <h2 className="mt-2 text-xl font-semibold text-primary">1. Objectif du questionnaire</h2>
             <p>
-              Le questionnaire <strong>Bien-Être au Travail</strong> a pour objectif d’évaluer
-              le ressenti global des collaborateurs sur leur santé mentale au travail.
-              Il s’agit d’un outil de prévention et d’amélioration, sans finalité commerciale.
+              Le questionnaire <strong>Bien-Être au Travail</strong> a pour objectif d’évaluer le
+              ressenti global des collaborateurs sur leur santé mentale au travail. Il s’agit d’un
+              outil de prévention et d’amélioration, sans finalité commerciale.
             </p>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">2. Données collectées</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">2. Données collectées</h2>
             <p>
               Ce questionnaire est <strong>entièrement anonyme</strong>. Aucune donnée personnelle
               directement identifiable (nom, prénom, adresse e-mail, etc.) n’est collectée.
             </p>
-            <p>
-              Les seules informations enregistrées sont :
-            </p>
+            <p>Les seules informations enregistrées sont :</p>
             <ul className="list-disc pl-6 text-muted-foreground">
               <li>Un identifiant pseudonymisé choisi par le participant.</li>
               <li>Les réponses aux questions sous forme de scores numériques.</li>
             </ul>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">3. Hébergement et sécurité</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">3. Hébergement et sécurité</h2>
             <p>
-              Les données sont hébergées sur les serveurs européens de <strong>Supabase</strong>,
-              respectant la réglementation RGPD. L’accès est restreint aux administrateurs
-              autorisés de l’application.
+              Les données sont hébergées sur des infrastructures conformes au RGPD. L’accès est
+              restreint aux administrateurs autorisés de l’application.
             </p>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">4. Durée de conservation</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">4. Durée de conservation</h2>
             <p>
-              Les données anonymisées sont conservées pendant une durée maximale de
-              <strong> 12 mois</strong>, afin d’analyser les tendances globales et de produire
-              des rapports statistiques.
+              Les données anonymisées sont conservées pendant une durée maximale de <strong>12 mois</strong>,
+              afin d’analyser les tendances globales et de produire des rapports statistiques.
             </p>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">5. Utilisation des données</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">5. Utilisation des données</h2>
             <p>
-              Les résultats individuels ne sont pas communiqués à des tiers.
-              Seules des analyses agrégées et anonymes peuvent être partagées avec les équipes RH
-              ou les professionnels de santé partenaires.
+              Les résultats individuels ne sont pas communiqués à des tiers. Seules des analyses
+              agrégées et anonymes peuvent être partagées avec les équipes concernées.
             </p>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">6. Cookies et traçeurs</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">6. Cookies et traceurs</h2>
             <p>
-              Ce site n’utilise <strong>aucun cookie de suivi publicitaire</strong>.
-              Seul un cookie technique est utilisé pour enregistrer le consentement RGPD.
+              Ce site n’utilise <strong>aucun cookie de suivi publicitaire</strong>. Un cookie
+              technique peut enregistrer votre consentement.
             </p>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">7. Droits des utilisateurs</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">7. Droits des utilisateurs</h2>
             <p>
-              Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez
-              des droits suivants :
+              Conformément au RGPD, vous disposez de droits d’accès, d’effacement et de limitation.
+              Pour exercer ces droits :
             </p>
-            <ul className="list-disc pl-6 text-muted-foreground">
-              <li>Droit d’accès et de consultation de vos données.</li>
-              <li>Droit à l’effacement de vos réponses.</li>
-              <li>Droit à la limitation du traitement.</li>
-            </ul>
             <p>
-              Pour exercer ces droits, vous pouvez contacter le responsable du projet via votre
-              service RH ou l’adresse e-mail suivante :
-              <br />
               <a
                 href="mailto:contact@ton-site.fr"
                 className="underline text-primary hover:text-secondary transition"
@@ -98,16 +80,18 @@ export default function PrivacyPage() {
               </a>
             </p>
 
-            <h2 className="text-xl font-semibold text-primary mt-4">8. Modifications de cette politique</h2>
+            <h2 className="mt-4 text-xl font-semibold text-primary">8. Modifications</h2>
             <p>
-              Cette politique peut être mise à jour en fonction de l’évolution du projet
-              ou de la législation. Toute modification importante sera indiquée sur cette page.
+              Cette politique peut évoluer. Toute modification importante sera indiquée sur cette page.
             </p>
           </section>
 
-          <div className="pt-6 flex justify-center">
-            <Button asChild variant="secondary" className="rounded-full">
-              <Link href="/">Retour à l’accueil</Link>
+          <div className="pt-6 flex justify-center gap-3">
+            <Button asChild variant="outline" className="rounded-full px-4">
+              <Link href="/intro" prefetch={false}>Revenir à l’intro</Link>
+            </Button>
+            <Button asChild className="rounded-full px-5">
+              <Link href="/quiz" prefetch={false}>Passer au questionnaire</Link>
             </Button>
           </div>
         </CardContent>

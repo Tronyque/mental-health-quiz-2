@@ -1,84 +1,101 @@
-'use client';
-import { motion } from 'framer-motion';
-import { useTokenColor } from '@/lib/useTokenColor';
+"use client";
+import * as React from "react";
 
-interface Props {
-  value: number; // 0..100
-  size?: number; // px – diamètre du cercle (par défaut 112)
-  thickness?: number; // px – épaisseur du trait (par défaut 10)
-  showLabel?: boolean; // afficher le % au centre (par défaut true)
-  autoColor?: boolean; // adapte la couleur selon la progression
-  trackColor?: string;
-  progressColor?: string; // force une couleur
-}
+type ProgressCircleProps = {
+  /** 0..100 */
+  value: number;
+  /** Diamètre en px (par défaut 88) */
+  size?: number;
+  /** Épaisseur du trait (par défaut 8) */
+  strokeWidth?: number;
+  /** Couleur manuelle (si autoColor=false) */
+  color?: string;
+  /** Active la couleur automatique (rouge → vert) */
+  autoColor?: boolean;
+  /** Légende accessible (aria-label) */
+  label?: string;
+};
 
 export function ProgressCircle({
   value,
-  size = 112,
-  thickness = 10,
-  showLabel = true,
-  autoColor = true,
-  trackColor,
-  progressColor,
-}: Props) {
-  const primary = useTokenColor('--color-primary', '#7da6d2');
-  const secondary = useTokenColor('--color-secondary', '#9ac9aa');
-  const accent = useTokenColor('--color-accent', '#e9e7da');
-  const ring = useTokenColor('--color-ring', '#6d9bc4');
-
-  const color = (() => {
-    if (progressColor) return progressColor;
-    if (!autoColor) return primary;
-    if (value >= 75) return secondary;
-    if (value >= 50) return primary;
-    return accent;
-  })();
-
-  // On reste sur un repère 100x100 pour un rendu net,
-  // et on scale via width/height (style) pour la taille finale.
-  const radius = 45; // rayon effectif (dans le repère 100x100)
-  const circumference = 2 * Math.PI * radius;
+  size = 88,
+  strokeWidth = 8,
+  color = "hsl(var(--primary))",
+  autoColor = false,
+  label = "Progression",
+}: ProgressCircleProps) {
   const clamped = Math.max(0, Math.min(100, value));
-  const offset = circumference - (clamped / 100) * circumference;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - clamped / 100);
+
+  // Déterminer la couleur de progression
+  const stroke = React.useMemo(() => {
+    if (!autoColor) return color;
+    // 0 → rouge, 100 → vert doux
+    const hue = 0 + (140 * clamped) / 100;
+    return `hsl(${hue} 70% 45%)`;
+  }, [autoColor, color, clamped]);
+
+  // Couleur du fond : légère pour clair + sombre
+  const trackColor = "hsl(var(--muted-foreground) / 0.25)";
+  // Couleur du texte central : contraste garanti
+  const textColor = clamped >= 50 ? "hsl(var(--foreground))" : "hsl(var(--primary))";
+
 
   return (
-    <div
+    <svg
+      width={size}
+      height={size}
       role="img"
-      aria-label={`Progression ${Math.round(clamped)}%`}
-      className="relative"
-      style={{ width: size, height: size }}
+      aria-label={`${label}: ${Math.round(clamped)}%`}
+      viewBox={`0 0 ${size} ${size}`}
+      className="block"
     >
-      <svg className="h-full w-full" viewBox="0 0 100 100">
-        {/* piste */}
-        <circle
-          stroke={trackColor || 'var(--color-border)'}
-          strokeWidth={thickness}
-          fill="transparent"
-          r={radius}
-          cx="50"
-          cy="50"
-        />
-        {/* progression */}
-        <motion.circle
-          stroke={color}
-          strokeWidth={thickness}
-          strokeLinecap="round"
-          fill="transparent"
-          r={radius}
-          cx="50"
-          cy="50"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform="rotate(-90 50 50)"
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-        />
-      </svg>
-
-      {showLabel && (
-        <div className="absolute inset-0 grid place-items-center">
-          <span className="text-foreground text-sm font-semibold">{Math.round(clamped)}%</span>
-        </div>
-      )}
-    </div>
+      {/* Fond / track */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke={trackColor}
+        strokeWidth={strokeWidth}
+        fill="none"
+      />
+      {/* Valeur */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        fill="none"
+        style={{
+          strokeDasharray: `${circumference} ${circumference}`,
+          strokeDashoffset: offset,
+          transition: "stroke-dashoffset .3s ease, stroke .2s ease",
+          transform: "rotate(-90deg)",
+          transformOrigin: "50% 50%",
+        }}
+      />
+      {/* Texte central */}
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        fontSize={Math.max(12, Math.floor(size * 0.2))}
+        fill={textColor}
+        style={{
+          fontWeight: 600,
+          textShadow:
+            "0 0 2px rgba(0,0,0,0.5), 0 0 4px rgba(0,0,0,0.25)", // lisible en dark
+        }}
+      >
+        {Math.round(clamped)}%
+      </text>
+    </svg>
   );
 }
+
+export default ProgressCircle;

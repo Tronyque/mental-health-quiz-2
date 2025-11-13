@@ -3,13 +3,15 @@
 import { useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
-interface LikertScaleProps {
+type Props = {
   min: number;
   max: number;
   value: number;
-  onChange: (value: number) => void;
+  onChange: (v: number) => void;
   labels?: string[];
-}
+  className?: string;
+  dense?: boolean;
+};
 
 export function LikertScale({
   min,
@@ -17,35 +19,29 @@ export function LikertScale({
   value,
   onChange,
   labels,
-}: LikertScaleProps) {
+  className,
+  dense,
+}: Props) {
   const steps = useMemo(() => {
-    const count = 5;
-    const range = Array.from({ length: count }, (_, i) =>
-      Math.round(min + (i * (max - min)) / (count - 1))
-    );
-    return Array.from(new Set(range));
+    const arr: number[] = [];
+    for (let v = min; v <= max; v++) arr.push(v);
+    return arr;
   }, [min, max]);
 
-  const defaultLabels = [
-    "Pas du tout d’accord",
-    "Plutôt pas d’accord",
-    "Neutre",
-    "Plutôt d’accord",
-    "Tout à fait d’accord",
-  ];
-
-  const optionLabels =
-    labels && labels.length >= 5 ? labels.slice(0, 5) : defaultLabels;
-
-  const select = useCallback((v: number) => onChange(v), [onChange]);
-
-  const move = useCallback(
-    (dir: -1 | 1) => {
-      const idx = Math.max(
-        0,
-        Math.min(steps.length - 1, Math.max(0, steps.indexOf(value)) + dir)
-      );
-      onChange(steps[idx]);
+  const handleKey = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const i = steps.indexOf(value);
+        const next = steps[Math.max(0, i - 1)] ?? steps[0];
+        onChange(next);
+      }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const i = steps.indexOf(value);
+        const next = steps[Math.min(steps.length - 1, i + 1)] ?? steps[steps.length - 1];
+        onChange(next);
+      }
     },
     [steps, value, onChange]
   );
@@ -54,32 +50,30 @@ export function LikertScale({
     <div
       role="radiogroup"
       aria-label="Échelle de réponse"
-      className="w-full max-w-md mx-auto flex flex-col gap-3"
-      onKeyDown={(e) => {
-        if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-          e.preventDefault();
-          move(-1);
-        } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-          e.preventDefault();
-          move(1);
-        }
-      }}
+      tabIndex={0}
+      onKeyDown={handleKey}
+      className={cn(
+        "w-full mx-auto grid grid-cols-2 sm:grid-cols-5 gap-2 max-w-md",
+        className
+      )}
     >
       {steps.map((v, i) => {
         const active = v === value;
-        const label = optionLabels[i] ?? String(v);
+        const label = labels?.[i] ?? String(v);
+
         return (
           <button
             key={v}
             role="radio"
             aria-checked={active}
-            onClick={() => select(v)}
+            onClick={() => onChange(v)}
             className={cn(
-              "w-full rounded-xl border px-4 py-4 transition text-center text-base font-medium",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+              "rounded-lg border text-sm font-medium text-center select-none transition-colors",
+              dense ? "px-2.5 py-2" : "px-3 py-2.5",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--color-ring))]",
               active
-                ? "bg-primary text-(--color-primary-foreground) border-primary shadow"
-                : "bg-card text-foreground border-border hover:bg-[color-mix(in_oklab,var(--color-foreground)_6%,transparent)]"
+                ? "bg-primary text-primary-foreground border-primary shadow bg-blue-600 text-white border-blue-600"
+                : "bg-card text-foreground border-border hover:bg-[color-mix(in_oklab,hsl(var(--color-foreground))_8%,transparent)]"
             )}
           >
             {label}
