@@ -1,3 +1,4 @@
+// components/RadarChart.tsx
 'use client';
 
 import * as React from 'react';
@@ -18,12 +19,6 @@ type Props = {
   highlightBelow50?: boolean;
 };
 
-function cssColor(varName: string, fallback: string) {
-  if (typeof window === 'undefined') return fallback;
-  const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  return v ? (v.startsWith('hsl(') ? v : `hsl(${v})`) : fallback;
-}
-
 const ONE_WORD_MAP: Record<string, string> = {
   'Satisfaction globale': 'Satisfaction',
   'Optimisme professionnel': 'Optimisme',
@@ -40,7 +35,8 @@ const ONE_WORD_MAP: Record<string, string> = {
   'Satisfaction dans le rôle': 'Rôle',
 };
 const toOneWord = (label: string) =>
-  ONE_WORD_MAP[label] ?? (label.replace(/[–—()]/g, ' ').trim().split(/\s+/)[0] || label);
+  ONE_WORD_MAP[label] ??
+  (label.replace(/[–—()]/g, ' ').trim().split(/\s+/)[0] || label);
 
 const hueFrom = (v: number) => Math.max(0, Math.min(100, v)) * 1.4;
 
@@ -58,17 +54,19 @@ export default function RadarChart({
         score: Number.isFinite(data[i]) ? data[i] : 0,
         ring50Score: 50,
       })),
-    [data, dimensions]
+    [data, dimensions],
   );
 
   const avg = React.useMemo(
     () => chartData.reduce((s, d) => s + d.score, 0) / Math.max(1, chartData.length),
-    [chartData]
+    [chartData],
   );
 
-  const fg = cssColor('--foreground', '#e5e7eb');
-  const bd = cssColor('--border', '#334155');
-  const card = cssColor('--card', '#0b1220');
+  // On force des couleurs lisibles (indépendantes du thème)
+  const textColor = '#0f172a';      // texte sombre
+  const gridColor = '#94a3b8';      // gris moyen
+  const tooltipBorder = '#cbd5e1';  // bordure tooltip
+  const tooltipBg = '#ffffff';      // fond tooltip
 
   const hue = hueFrom(avg);
   const stroke =
@@ -78,14 +76,46 @@ export default function RadarChart({
 
   const gradId = React.useId();
 
+  // Tooltip custom pour garder le texte dans le cadre
+  const CustomTooltip = (props: any) => {
+    const { active, payload } = props;
+    if (!active || !payload || !payload.length) return null;
+
+    const p = payload[0];
+    const dimension = p.payload?.dimension ?? p.payload?.short;
+    const rawValue = p.payload?.score ?? p.value;
+    const value = Math.round(rawValue);
+
+    return (
+      <div
+        style={{
+          borderRadius: 12,
+          border: `1px solid ${tooltipBorder}`,
+          background: tooltipBg,
+          color: textColor,
+          padding: '8px 10px',
+          maxWidth: 260,
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+          overflow: 'hidden',
+          fontSize: 11,
+          boxShadow: '0 8px 20px rgba(15,23,42,0.18)',
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>{dimension}</div>
+        <div>{value} / {maxScore}</div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-base font-semibold" style={{ color: fg }}>
+        <h2 className="text-base font-semibold" style={{ color: textColor }}>
           Profil global
         </h2>
-        <span className="text-xs" style={{ color: fg, opacity: 0.7 }}>
-          0–100 • repère à 50
+        <span className="text-xs" style={{ color: textColor, opacity: 0.8 }}>
+          0–{maxScore} • repère à 50
         </span>
       </div>
 
@@ -96,22 +126,26 @@ export default function RadarChart({
               <stop
                 offset="0%"
                 stopColor={stroke}
-                stopOpacity={highlightBelow50 && avg < 50 ? 0.65 : 0.55}
+                stopOpacity={highlightBelow50 && avg < 50 ? 0.75 : 0.65}
               />
               <stop
                 offset="100%"
                 stopColor={stroke}
-                stopOpacity={highlightBelow50 && avg < 50 ? 0.35 : 0.28}
+                stopOpacity={highlightBelow50 && avg < 50 ? 0.45 : 0.35}
               />
             </linearGradient>
           </defs>
 
-          <PolarGrid stroke={bd} strokeOpacity={0.2} radialLines />
-          <PolarAngleAxis dataKey="short" tick={{ fontSize: 12, fill: fg }} tickLine={false} />
+          <PolarGrid stroke={gridColor} strokeOpacity={0.8} radialLines />
+          <PolarAngleAxis
+            dataKey="short"
+            tick={{ fontSize: 12, fill: textColor }}
+            tickLine={false}
+          />
           <PolarRadiusAxis
             domain={[0, maxScore]}
             tickCount={5}
-            tick={{ fontSize: 11, fill: fg }}
+            tick={{ fontSize: 11, fill: textColor }}
             tickLine={false}
             axisLine={false}
           />
@@ -119,8 +153,8 @@ export default function RadarChart({
           {/* Ligne médiane 50% */}
           <Radar
             dataKey="ring50Score"
-            stroke={bd}
-            strokeOpacity={0.45}
+            stroke={gridColor}
+            strokeOpacity={0.9}
             strokeWidth={1.5}
             strokeDasharray="4 4"
             dot={false}
@@ -138,23 +172,7 @@ export default function RadarChart({
             fillOpacity={1}
           />
 
-          <Tooltip
-            contentStyle={{
-              borderRadius: 12,
-              border: `1px solid ${bd}`,
-              background: card,
-              color: fg,
-              padding: '8px 10px',
-            }}
-            formatter={(value: number, _n: string, props: any) => [
-              `${value}%`,
-              props?.payload?.dimension ?? 'Score',
-            ]}
-            // @ts-ignore — variations de types Recharts
-            labelFormatter={(_label: string, payload: any[]) =>
-              payload?.[0]?.payload?.dimension ?? ''
-            }
-          />
+          <Tooltip content={<CustomTooltip />} />
         </RcRadarChart>
       </ResponsiveContainer>
     </div>

@@ -10,9 +10,9 @@ import { LikertScale } from "@/components/LikertScale";
 import { ProgressCircle } from "@/components/ProgressCircle";
 import { AmbientSoundToggle } from "@/components/site/AmbientSoundToggle";
 import { questions, dimensions, normalizeScore } from "@/lib/questions";
-import { submitQuiz } from "@/lib/api";
 import ResultsRadar from "@/components/ResultsRadar";
 import ReportGenerator from "@/components/ReportGenerator";
+import ResultsView from "@/components/ResultsView";
 
 
 /* === Helpers === */
@@ -31,22 +31,17 @@ function calculateScores(answers: number[]) {
 const labelForDim = (dim: string) =>
   dim === "Stress et détente" ? "Détente (↗ mieux)" : dim;
 
-const getAdvice = (dim: string, score: number) =>
-  score > 70
-    ? `Super, ${labelForDim(dim)} au top !`
-    : score > 50
-    ? `${labelForDim(dim)} : à peaufiner.`
-    : `${labelForDim(dim)} : à surveiller.`;
-
 /* === Types locaux === */
 type ProfileForm = {
-  facility: string;
+  facility: string; // sera l’UUID de l’EHPAD
   job: string;
   age: string;
   seniority: string;
   comment?: string;
 };
-type AnswerRow = { questionId: string; value: number };
+
+// ⚠️ L’API /api/submit attend { questionId, score }
+type AnswerRow = { questionId: string; score: number };
 
 /* === Page === */
 const QuizPage: FC = () => {
@@ -92,28 +87,57 @@ const QuizPage: FC = () => {
     setError("");
     setLoading(true);
     try {
-      // ✅ tableau { questionId, value } attendu par /api/submit
+      // ✅ tableau { questionId, score } attendu par /api/submit
       const formattedAnswers: AnswerRow[] = questions
         .map((q, i) => ({
           questionId: q.id,
-          value: Number(answers[i] ?? 0),
+          score: Number(answers[i] ?? 0), // IMPORTANT: score numérique 1..5
         }))
         // on filtre les non-réponses si min > 0
         .filter((row) => {
           const q = questions.find((qq) => qq.id === row.questionId)!;
-          return row.value >= q.scale.min;
+          return row.score >= q.scale.min;
         });
 
-      await submitQuiz(
-        pseudo.trim(),
-        formattedAnswers,
-        p,
-        true,
-        "/api/submit" // ✅ on cible bien la route qui insère dans Supabase
-      );
+      const payload = {
+        facilityId: p.facility, // ⚠️ doit être l’UUID de l’EHPAD
+        pseudo: pseudo.trim(),
+        job: p.job,
+        ageRange: p.age,
+        seniority: p.seniority,
+        comment: p.comment?.trim() || null,
+        consented: true,
+        answers: formattedAnswers,
+      };
+
+      console.log("submit payload", payload);
+
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const rawText = await res.text();
+      console.log("RAW /api/submit response:", res.status, rawText);
+
+      let body: any = {};
+      try {
+        body = rawText ? JSON.parse(rawText) : {};
+      } catch (e) {
+        console.warn("Impossible de parser le JSON de /api/submit:", e);
+      }
+
+      console.log("PARSED /api/submit body:", body);
+
+      if (!res.ok || body.ok === false) {
+        console.error("submitQuiz failed raw parsed:", body);
+        throw new Error(body.error || "Erreur lors de l’envoi du questionnaire");
+      }
+
+      console.log("Submission ok, id =", body.submissionId);
     } catch (err: any) {
       console.error("submitQuiz failed:", err?.message || err);
-      // Optionnel: affiche un message doux si l’envoi a échoué
       setError(
         "Envoi momentanément indisponible — affichage des résultats locaux."
       );
@@ -139,11 +163,24 @@ const QuizPage: FC = () => {
   /* === Étape 3 : Profil === */
   if (showProfileForm && !showResults) {
     const EHPADS = [
-      "Les Jardins du Soleil",
-      "Résidence Harmonie",
-      "Villa des Lilas",
-      "Les Chênes Bleus",
+      {
+        id: "a5eeb954-463a-426a-8d57-09fe0abbc0b7",
+        label: "Les Jardins du Soleil",
+      },
+      {
+        id: "3242e4db-1a1e-44a3-b52f-375abb9de91e",
+        label: "Résidence Harmonie",
+      },
+      {
+        id: "d74b346f-96d7-4c4f-bbb4-f4339c39c11e",
+        label: "Villa des Lilas",
+      },
+      {
+        id: "8568d623-d2b9-4b26-81a1-dfefeaa86a0e",
+        label: "Les Chênes Bleus",
+      },
     ];
+
     const JOBS = [
       "Aide-soignant(e)",
       "Infirmier(e)",
@@ -195,8 +232,8 @@ const QuizPage: FC = () => {
               >
                 <option value="">Sélectionnez</option>
                 {EHPADS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
@@ -293,10 +330,14 @@ const QuizPage: FC = () => {
   /* === Étape 4 : Résultats === */
   if (showResults) {
     const scores = calculateScores(answers);
-    const chartData = dimensions.map((dim, i) => ({
-      dimension: labelForDim(dim),
-      score: Math.min(scores[i], 100),
-    }));
+    const chartData = dimensions.map((dim, i) => {
+      const raw = Math.min(scores[i], 100);
+      const rounded = Math.round(raw * 10) / 10;
+      return {
+        dimension: labelForDim(dim),
+        score: rounded,
+      };
+    });
 
     return (
       <motion.div
@@ -308,16 +349,10 @@ const QuizPage: FC = () => {
           Merci pour votre participation 🌼
         </h1>
 
-        <div className="w-full max-w-lg bg-card rounded-2xl shadow-soft border border-accent/10 p-4
-                        bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-          <ResultsRadar data={chartData} getAdvice={getAdvice} />
-          <ReportGenerator results={chartData}
-          />
-        </div>
+        <ResultsView results={chartData} locale="fr" />
       </motion.div>
     );
   }
-
   /* === Étape 1 & 2 : PSEUDO puis QUESTIONS === */
   const current = questions[step];
 
@@ -374,7 +409,7 @@ const QuizPage: FC = () => {
             {/* Cercle de progression */}
             {(() => {
               const pct = ((step + 1) / questions.length) * 100;
-              console.log("progress % =", pct); // 🔍 debug
+              console.log("progress % =", pct);
               return (
                 <div className="w-full flex justify-center">
                   <ProgressCircle value={pct} autoColor />

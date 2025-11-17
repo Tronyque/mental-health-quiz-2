@@ -2,148 +2,129 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import type { Database, TablesInsert } from '@/lib/database.types';
+import type { Database } from '@/lib/database.types';
 
-export const runtime = 'nodejs';         // ✅ secrets côté serveur
-export const dynamic = 'force-dynamic';  // ✅ pas de cache
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-// ---- Schemas ----
+// ---- Schemas Zod ----
 const AnswerSchema = z.object({
-  questionId: z.string().min(2),          // ex: "q2_3"
-  value: z.number().int().min(1).max(5),  // Likert 1..5
+  questionId: z.string().min(2),         // ex: "q2_3"
+  score: z.number().int().min(1).max(5), // Likert 1..5
 });
-
-const ProfileSchema = z.object({
-  facility: z.string().min(1, 'EHPAD requis'),
-  job: z.string().min(1, 'Emploi requis'),
-  age: z.string().min(1, 'Âge requis'),
-  seniority: z.string().min(1, 'Ancienneté requise'),
-  comment: z.string().max(2000).optional(),
-});
-
-const PseudoSchema = z
-  .string()
-  .min(2, 'Pseudo trop court')
-  .max(64, 'Pseudo trop long')
-  .regex(/^[A-Za-z0-9_\-\p{L}]+$/u, 'Caractères spéciaux non autorisés');
 
 const PayloadSchema = z.object({
-  pseudo: PseudoSchema,
-  answers: z.array(AnswerSchema).min(1),
-  consent: z.boolean(),
-  profile: ProfileSchema,
-  context: z
-    .object({
-      questionnaireVersion: z.string().default('v1'),
-      durationSeconds: z.number().int().optional(),
-      locale: z.string().optional(),
-      department: z.string().optional(),
-    })
-    .partial()
-    .default({}),
+  facilityId: z.string().uuid(),
+  pseudo: z.string().min(1, 'Le pseudo est requis'),
+  job: z.string().min(1).max(255),
+  ageRange: z.string().min(1).max(255),
+  seniority: z.string().min(1).max(255),
+  comment: z.string().max(2000).nullable().optional(),
+  consented: z.boolean().optional().default(true),
+  answers: z.array(AnswerSchema).min(1, 'Au moins une réponse est requise.'),
 });
 
-// ---- Route ----
+// ---- Client Supabase service-side ----
+function getSupabaseServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error(
+      'Supabase non configuré. Vérifie NEXT_PUBLIC_SUPABASE_URL/SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY.',
+    );
+  }
+
+  return createClient<Database>(url, serviceKey, {
+    auth: { persistSession: false },
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !serviceKey) {
-      return NextResponse.json(
-        { error: 'Supabase non configuré (URL/Service Role Key manquants)' },
-        { status: 500 }
-      );
-    }
-
-    // ✅ parse + erreurs 400 détaillées
     const json = await req.json();
     const parsed = PayloadSchema.safeParse(json);
+
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Payload invalide', issues: parsed.error.issues },
-        { status: 400 }
+        {
+          ok: false,
+          error: 'Payload invalide',
+          issues: parsed.error.issues,
+        },
+        { status: 400 },
       );
     }
-    const payload = parsed.data;
 
-    if (!payload.consent) {
-      return NextResponse.json({ error: 'Consent required' }, { status: 400 });
-    }
+    const {
+      facilityId,
+      pseudo,
+      job,
+      ageRange,
+      seniority,
+      comment,
+      consented,
+      answers,
+    } = parsed.data;
 
-    const supabase = createClient<Database>(url, serviceKey, {
-      auth: { persistSession: false },
-    });
+    const supabase = getSupabaseServerClient();
 
-    const ua = req.headers.get('user-agent') ?? undefined;
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+    // IP + User-Agent depuis les headers
+    const ipHeader = req.headers.get('x-forwarded-for') ?? '';
+    const clientIp =
+      ipHeader.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      null;
 
-    // 1) Trouver ou créer l’établissement — éviter doublons
-    // 👉 Recommandé : contrainte UNIQUE(name) côté DB
-    //    puis upsert ici :
-    const { data: fac, error: facSelErr } = await supabase
-      .from('facilities')
-      .select('id')
-      .eq('name', payload.profile.facility)
-      .maybeSingle();
-    if (facSelErr) throw facSelErr;
+    const userAgent = req.headers.get('user-agent') ?? null;
 
-    let facility_id = fac?.id as string | undefined;
-    if (!facility_id) {
-      const { data: facIns, error: facInsErr } = await supabase
-        .from('facilities')
-        .insert({ name: payload.profile.facility })
-        .select('id')
-        .single();
-      if (facInsErr) throw facInsErr;
-      facility_id = facIns.id;
-    }
-
-    // 2) Insert submission (hash du pseudo via trigger)
-    const submissionToInsert: TablesInsert<'submissions'> = {
-      facility_id,
-      pseudo_preimage: payload.pseudo.trim(),
-      job: payload.profile.job,
-      age_range: payload.profile.age,
-      seniority: payload.profile.seniority,
-      comment: payload.profile.comment ?? null,
-      consented: payload.consent,
-      client_ip: ip ?? null,
-      user_agent: ua ?? null,
-      // Option : stocker quelques champs de context si présents
-      // questionnaire_version: payload.context.questionnaireVersion ?? 'v1',
-    };
-
-    const { data: sub, error: subErr } = await supabase
-      .from('submissions')
-      .insert(submissionToInsert)
-      .select('id')
-      .single();
-    if (subErr) throw subErr;
-
-    // 3) Insert responses (valeurs Likert brutes 1..5)
-    const rows: TablesInsert<'responses'>[] = payload.answers.map((a) => ({
-      submission_id: sub.id,
-      facility_id,
+    // Préparer le JSON attendu par submit_quiz :
+    // [{ question_id: 'q0_1', score: 4 }, ...]
+    const answersJson = answers.map((a) => ({
       question_id: a.questionId,
-      score: a.value,
+      score: a.score,
     }));
 
-    const { error: respErr } = await supabase.from('responses').insert(rows);
-    if (respErr) throw respErr;
+    const { data, error } = await supabase.rpc('submit_quiz', {
+      p_facility_id: facilityId,
+      p_answers: answersJson,
+      p_pseudo: pseudo,
+      p_job: job,
+      p_age_range: ageRange,
+      p_seniority: seniority,
+      p_comment: comment ?? null,
+      p_consented: consented ?? false,
+      p_client_ip: clientIp,
+      p_user_agent: userAgent,
+    });
 
-    return NextResponse.json({ ok: true, submissionId: sub.id }, { status: 201 });
+    if (error) {
+      console.error('Supabase submit_quiz error:', error);
+      return NextResponse.json(
+        {
+          ok: false,
+          error: error.message ?? 'Erreur lors de la soumission du questionnaire.',
+        },
+        { status: 500 },
+      );
+    }
+
+    // data = UUID retourné par la fonction submit_quiz
+    return NextResponse.json(
+      {
+        ok: true,
+        submissionId: data,
+      },
+      { status: 201 },
+    );
   } catch (e: any) {
     console.error('submit route error:', e);
-
-    // Erreur DB/serveur → 500 ; requète invalide → 400
-    const status =
-      typeof e?.code === 'string' || e?.message?.includes('duplicate key')
-        ? 400
-        : 500;
-
     return NextResponse.json(
-      { ok: false, error: e?.message ?? 'Server error' },
-      { status }
+      {
+        ok: false,
+        error: e?.message ?? 'Erreur serveur lors de la soumission.',
+      },
+      { status: 500 },
     );
   }
 }

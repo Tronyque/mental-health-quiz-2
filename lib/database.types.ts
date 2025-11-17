@@ -2,7 +2,13 @@
 // Types générés à la main pour le schéma RGPD/Metabase actuel.
 // Si tu changes le schéma côté Supabase, pense à régénérer ou ajuster ici.
 
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 export type Database = {
   __InternalSupabase: {
@@ -245,8 +251,28 @@ export type Database = {
     };
     Functions: {
       normalize_score: {
-        Args: { p_value: number; p_min: number; p_max: number; p_inverted: boolean };
+        Args: {
+          p_value: number;
+          p_min: number;
+          p_max: number;
+          p_inverted: boolean;
+        };
         Returns: number;
+      };
+      submit_quiz: {
+        Args: {
+          p_facility_id: string; // UUID
+          p_answers: Json; // JSONB array [{question_id, score}, ...]
+          p_pseudo: string;
+          p_job: string;
+          p_age_range: string;
+          p_seniority: string;
+          p_comment?: string | null;
+          p_consented?: boolean;
+          p_client_ip?: string | null; // inet -> string
+          p_user_agent?: string | null;
+        };
+        Returns: string; // UUID retourné
       };
     };
     Enums: {
@@ -332,7 +358,9 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
