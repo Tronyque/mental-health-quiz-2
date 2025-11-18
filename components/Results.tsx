@@ -1,95 +1,119 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { questions } from '@/lib/questions';
+import { Button } from '@/components/ui/button';
 import { Leaf, Share2, Download } from 'lucide-react';
-import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { questions } from '@/lib/questions';
 
-const dimensionLabels: Record<string, string> = {
-  charge: "Charge de travail",
-  autonomie: "Autonomie & sens",
-  reconnaissance: "Reconnaissance",
-  ambiance: "Ambiance d'équipe",
-  formation: "Formation & évolution",
-  equilibre: "Équilibre vie pro/perso",
-  management: "Management de proximité",
-  ressources: "Moyens & ressources",
-};
+export default function Results({ 
+  answers, 
+  demographics 
+}: { 
+  answers: Record<string, number>; 
+  demographics?: { 
+    ehpad?: string; 
+    fonction?: string; 
+    age?: string; 
+    anciennete?: string; 
+  } 
+}) {
+  const [report, setReport] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-export default function Results({ answers }: { answers: Record<string, number> }) {
-// Calcul du nombre de questions par dimension (dynamique = toujours juste)
-  const questionCountPerDim = questions.reduce((acc, q) => {
-    const dim = q.dimension;
-    if (dim) acc[dim] = (acc[dim] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        const resultsForAI = Object.entries(answers).map(([id, score]) => ({
+          dimension: questions.find((q: any) => q.id === id)?.dimension || "Autre",
+          value: score,
+        }));
 
-  // Scores par dimension
-  const dimensionScores = Object.entries(answers).reduce((acc, [id, score]) => {
-    const dim = questions.find(q => q.id === id)?.dimension;
-    if (dim) acc[dim] = (acc[dim] || 0) + score;
-    return acc;
-  }, {} as Record<string, number>);
+        const res = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            results: resultsForAI,
+            locale: 'fr',
+            demographics,
+          }),
+        });
 
-  // Normalisation en % (parfait même si 2, 3 ou 4 questions par dim)
-  const data = Object.entries(dimensionLabels).map(([key, label]) => {
-    const count = questionCountPerDim[key] || 1;
-    const maxForDim = count * 5;
-    const rawScore = dimensionScores[key] || 0;
-    return {
-      dimension: label,
-      score: Math.round((rawScore / maxForDim) * 100),
+        const data = await res.json();
+        if (data.ok) {
+          setReport(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
-  });
 
-  const globalScore = Math.round(
-    data.reduce((sum, d) => sum + d.score, 0) / data.length
-  );
+    fetchReport();
+  }, [answers, demographics]);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 to-white">
+        <div className="text-center space-y-8">
+          <Leaf className="w-20 h-20 text-green-600 animate-pulse mx-auto" />
+          <p className="text-2xl font-medium text-gray-700">Génération de votre rapport personnalisé...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white p-6">
-      <div className="max-w-5xl mx-auto space-y-12">
+      <div className="max-w-4xl mx-auto space-y-12">
         <div className="text-center space-y-6">
           <Leaf className="w-16 h-16 text-green-600 mx-auto" />
-          <h1 className="text-5xl font-bold text-gray-800">Vos résultats</h1>
-          <p className="text-2xl text-green-700 font-bold">Score global : {globalScore}/100</p>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            {globalScore >= 80 ? "Vous semblez très épanoui·e dans votre travail !" : globalScore >= 60 ? "Des points positifs, mais aussi quelques leviers d'amélioration." : "Votre bien-être au travail semble fragilisé. Parler-en peut vraiment aider."}
-          </p>
+          <h1 className="text-5xl font-bold text-gray-800">Votre rapport personnalisé</h1>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {data.map((item) => (
-            <Card key={item.dimension} className="hover:shadow-xl transition-shadow">
+        <Card className="shadow-2xl">
+          <CardContent className="pt-8 space-y-8">
+            <h2 className="text-3xl font-bold text-center text-green-700">Synthèse globale</h2>
+            <div className="prose prose-lg mx-auto text-gray-700 leading-relaxed">
+              <ReactMarkdown>
+                {report?.multidim || "Analyse en cours..."}
+              </ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-8">
+          <h2 className="text-3xl font-bold text-center text-gray-800">Analyse par dimension</h2>
+          {report?.dimensionAnalyses && Object.entries(report.dimensionAnalyses).map(([dim, text]: [string, any]) => (
+            <Card key={dim} className="shadow">
               <CardContent className="pt-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">{item.dimension}</h3>
-                  <span className="text-2xl font-bold text-green-700">{item.score}/100</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-8">
-                  <div
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 h-8 rounded-full transition-all duration-1000"
-                    style={{ width: `${item.score}%` }}
-                  />
+                <h3 className="text-2xl font-semibold mb-4 text-green-700">
+                  {dim}
+                </h3>
+                <div className="prose text-gray-700">
+                  <ReactMarkdown>
+                    {text}
+                  </ReactMarkdown>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="text-center space-y-6">
-          <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-            Merci infiniment d’avoir pris le temps de répondre. <br />
-            <strong>Vos réponses restent totalement anonymes</strong> et vont permettre d'améliorer concrètement les conditions de travail dans nos établissements.
+        <div className="text-center space-y-8 pt-12">
+          <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
+            Merci infiniment pour votre participation.<br />
+            Vos réponses restent totalement anonymes et contribuent à améliorer le bien-être de tous au sein des établissements.
           </p>
 
-          <div className="flex justify-center gap-6">
-            <Button size="lg" variant="outline">
-              <Share2 className="mr-2" /> Partager (anonyme)
+          <div className="flex justify-center gap-6 flex-wrap">
+            <Button size="lg" variant="outline" className="flex items-center gap-3">
+              <Share2 className="w-5 h-5" /> Partager mes résultats (anonyme)
             </Button>
-            <Button size="lg" className="bg-green-600 hover:bg-green-700">
-              <Download className="mr-2" /> Télécharger mon rapport personnel
+            <Button size="lg" className="bg-green-600 hover:bg-green-700 flex items-center gap-3">
+              <Download className="w-5 h-5" /> Télécharger le rapport PDF
             </Button>
           </div>
         </div>
