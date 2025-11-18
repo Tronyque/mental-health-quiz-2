@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Heart, BarChart3, Sparkles, Leaf, Users, Lock, TrendingUp } from 'lucide-react';
+import { Shield, Heart, Users, TrendingUp, Leaf } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function IntroPage() {
@@ -12,7 +12,6 @@ export default function IntroPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-12">
-        {/* Titre principal */}
         <div className="text-center space-y-6">
           <div className="flex justify-center">
             <Leaf className="w-16 h-16 text-green-600" />
@@ -26,7 +25,6 @@ export default function IntroPage() {
           </p>
         </div>
 
-        {/* Cartes avantages */}
         <div className="grid md:grid-cols-2 gap-6">
           <Card className="border-green-200 bg-white/90 backdrop-blur hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-8">
@@ -87,7 +85,6 @@ export default function IntroPage() {
 
         <Separator className="max-w-xl mx-auto bg-green-200" />
 
-        {/* Bouton final */}
         <div className="text-center space-y-8">
           <p className="text-gray-600 max-w-2xl mx-auto text-lg">
             En continuant, vous acceptez que vos réponses anonymes soient utilisées pour l’analyse collective.<br />
