@@ -3,41 +3,50 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import questions from '@/lib/questions';
+import { questions } from '@/lib/questions';
 import { Leaf, Share2, Download } from 'lucide-react';
 import { useState } from 'react';
 
 const dimensionLabels: Record<string, string> = {
-  charge: 'Charge de travail',
-  autonomie: 'Autonomie & sens',
-  reconnaissance: 'Reconnaissance',
-  ambiance: 'Ambiance d'équipe',
-  formation: 'Formation & évolution',
-  equilibre: 'Équilibre vie pro/perso',
-  management: 'Management de proximité',
-  ressources: 'Moyens & ressources',
+  charge: "Charge de travail",
+  autonomie: "Autonomie & sens",
+  reconnaissance: "Reconnaissance",
+  ambiance: "Ambiance d'équipe",
+  formation: "Formation & évolution",
+  equilibre: "Équilibre vie pro/perso",
+  management: "Management de proximité",
+  ressources: "Moyens & ressources",
 };
 
 export default function Results({ answers }: { answers: Record<string, number> }) {
-  const scores = Object.entries(answers).reduce((acc, [id, score]) => {
-    const dim = questions.find(q => q.id === id)?.dimension || 'autre';
-    acc[dim] = (acc[dim] || 0) + score;
+// Calcul du nombre de questions par dimension (dynamique = toujours juste)
+  const questionCountPerDim = questions.reduce((acc, q) => {
+    const dim = q.dimension;
+    if (dim) acc[dim] = (acc[dim] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const counts = Object.values(scores);
-  const maxPerDim = 15; // 3 questions × 5 max
-  Object.keys(scores).forEach(dim => {
-    scores[dim] = Math.round((scores[dim] / (maxPerDim * counts.length)) * 100);
+  // Scores par dimension
+  const dimensionScores = Object.entries(answers).reduce((acc, [id, score]) => {
+    const dim = questions.find(q => q.id === id)?.dimension;
+    if (dim) acc[dim] = (acc[dim] || 0) + score;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Normalisation en % (parfait même si 2, 3 ou 4 questions par dim)
+  const data = Object.entries(dimensionLabels).map(([key, label]) => {
+    const count = questionCountPerDim[key] || 1;
+    const maxForDim = count * 5;
+    const rawScore = dimensionScores[key] || 0;
+    return {
+      dimension: label,
+      score: Math.round((rawScore / maxForDim) * 100),
+    };
   });
 
-  const data = Object.entries(dimensionLabels).map(([key, label]) => ({
-    dimension: label,
-    score: scores[key] || 0,
-  }));
-
-  const globalScore = Math.round(data.reduce((sum, d) => sum + d.score, 0) / data.length);
-
+  const globalScore = Math.round(
+    data.reduce((sum, d) => sum + d.score, 0) / data.length
+  );
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white p-6">
       <div className="max-w-5xl mx-auto space-y-12">
